@@ -1,12 +1,23 @@
 {
   "StartUp": {
     "next": [
+      "StartUp@DismissPopup",
       "StartUp@IsHome",
       "StartUp@Loading",
       "StartUp@TapToWake",
       "StartUp@CloseAnno",
       "StartUp@Offline"
     ]
+  },
+
+  "StartUp@DismissPopup": {
+    "recognition": "OCR",
+    "expected": ["寻访现已开放", "博士"],
+    "roi": [0, 0, 1280, 720],
+    "action": "Click",
+    "target": [640, 360, 1, 1],
+    "post_delay": 600,
+    "next": ["StartUp@DismissPopup", "StartUp@IsHome"]
   },
 
   "StartUp@IsHome": {
@@ -53,11 +64,22 @@
 
   "ReturnToHome": {
     "next": [
+      "ReturnToHome@DismissPopup",
       "ReturnToHome@IsHome",
       "ReturnToHome@ReturnConfirm",
       "ReturnToHome@ReturnButton",
       "ReturnToHome@CloseAnno"
     ]
+  },
+
+  "ReturnToHome@DismissPopup": {
+    "recognition": "OCR",
+    "expected": ["寻访现已开放", "博士"],
+    "roi": [0, 0, 1280, 720],
+    "action": "Click",
+    "target": [640, 360, 1, 1],
+    "post_delay": 600,
+    "next": ["ReturnToHome@DismissPopup", "ReturnToHome@IsHome"]
   },
 
   "ReturnToHome@IsHome": {
