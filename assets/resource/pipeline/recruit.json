@@ -18,7 +18,7 @@
     "expected": "公开招募",
     "roi": [50, 100, 230, 100],
     "action": "DoNothing",
-    "next": ["Recruit@ClickRecruit"]
+    "next": ["Recruit@ClickRecruit", "Recruit@Done"]
   },
 
   "Recruit@ClickRecruit": {
@@ -49,6 +49,11 @@
   "Recruit@Confirm": {
     "action": "Click",
     "target": [960, 566, 32, 32],
-    "post_delay": 1500
+    "post_delay": 2000,
+    "next": ["Recruit@OnRecruitScreen"]
+  },
+
+  "Recruit@Done": {
+    "action": "DoNothing"
   }
 }
