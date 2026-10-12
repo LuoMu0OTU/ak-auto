@@ -159,6 +159,67 @@ def find_game_window(cfg: AppConfig) -> Optional[dict[str, Any]]:
     return None
 
 
+def launch_game(cfg: AppConfig) -> bool:
+    """按 config.startup.game_path 拉起游戏客户端（仅启动，不等待）。"""
+    import os
+    import subprocess
+
+    path = cfg.startup.game_path
+    if not path or not os.path.isfile(path):
+        return False
+    subprocess.Popen([path], cwd=os.path.dirname(path) or None)
+    return True
+
+
+def wait_game_window(
+    cfg: AppConfig,
+    timeout: float = 180.0,
+    interval: float = 3.0,
+) -> Optional[dict[str, Any]]:
+    """轮询等待游戏窗口出现（默认最长 3 分钟）。"""
+    import time
+
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        win = find_game_window(cfg)
+        if win:
+            return win
+        time.sleep(interval)
+    return None
+
+
+def ensure_game_window(
+    cfg: AppConfig,
+    on_log: Any = None,
+    timeout: float = 180.0,
+) -> Optional[dict[str, Any]]:
+    """拿到游戏窗口；没有就（在允许时）自动启动游戏并等它出现。
+
+    on_log 可传入一个 str -> None 的回调，用于向用户播报进度。
+    """
+    def log(msg: str) -> None:
+        if on_log:
+            on_log(msg)
+
+    win = find_game_window(cfg)
+    if win:
+        return win
+
+    if not cfg.startup.launch:
+        log("游戏未运行，且 config 里 startup.launch = false，不自动启动。")
+        return None
+
+    if not launch_game(cfg):
+        log(f"游戏未运行，且启动失败：请检查 startup.game_path = {cfg.startup.game_path!r}")
+        return None
+
+    log("游戏未运行，已拉起客户端，等待窗口出现（最长 %.0f 秒）..." % timeout)
+    win = wait_game_window(cfg, timeout=timeout)
+    if not win:
+        log("等待超时，仍未找到游戏窗口。")
+    return win
+
+
 def parse_screencap(spec: str) -> int:
     """把 "FramePool|PrintWindow" / "Background" 解析为按位或的截图方式。"""
     val = 0

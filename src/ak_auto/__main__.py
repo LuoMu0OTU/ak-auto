@@ -152,9 +152,9 @@ def run(
 
     device.init_maa()
     cfg = AppConfig.load(config or None)
-    win = device.find_game_window(cfg)
+    win = device.ensure_game_window(cfg, on_log=typer.echo)
     if not win:
-        typer.echo("未找到游戏窗口（游戏是否已启动？）")
+        typer.echo("未找到游戏窗口，自动启动也没成功。请确认 config 的 startup.game_path，或手动打开游戏。")
         raise typer.Exit(1)
 
     sc = device.parse_screencap(cfg.device.screencap[0])
@@ -182,9 +182,9 @@ def daily(config: str = typer.Option("", "--config", help="config.json 路径"))
 
     device.init_maa()
     cfg = AppConfig.load(config or None)
-    win = device.find_game_window(cfg)
+    win = device.ensure_game_window(cfg, on_log=typer.echo)
     if not win:
-        typer.echo("未找到游戏窗口（游戏是否已启动？）")
+        typer.echo("未找到游戏窗口，自动启动也没成功。请确认 config 的 startup.game_path，或手动打开游戏。")
         raise typer.Exit(1)
 
     sc = device.parse_screencap(cfg.device.screencap[0])
