@@ -52,6 +52,20 @@
 
 ## 🚀 快速开始
 
+### 方式 A：双击启动（推荐，无需命令行）
+
+仓库根目录自带三个批处理脚本，**双击即用**：
+
+| 脚本 | 作用 |
+|---|---|
+| **`首次安装.bat`** | 建 venv → 装依赖 → 生成配置 → 拉取 MAA 素材 → 自检（**只需跑一次**） |
+| **`启动日常.bat`** | 前台跑日常全家桶，日志直接显示在窗口里 |
+| **`静默日常.bat`** | 后台（最小化窗口）跑日常，输出写入 `logs\daily.log`，跑完自动关窗 |
+
+> 脚本要求已装 Python 3.12。双击「首次安装.bat」后，按提示确认 `config\config.json` 里的游戏路径即可。
+
+### 方式 B：命令行
+
 ```powershell
 # 1) 用 3.12 建虚拟环境
 py -3.12 -m venv .venv
@@ -69,6 +83,9 @@ Copy-Item config\config.example.json config\config.json
 .\.venv\Scripts\python.exe -m ak_auto doctor
 .\.venv\Scripts\python.exe -m ak_auto daily
 ```
+
+> 改了启动脚本？用 `python tools/make_launchers.py` 重新生成即可
+> （批处理必须以系统 ANSI 代码页 GBK 保存，否则 cmd 会按 936 解析 UTF-8 字节导致乱码）。
 
 ## 🎮 使用
 
@@ -162,6 +179,7 @@ StartUp → AwardVisit(好友寻访) → Infrast(基建收菜) → Mall(采购)
 ## 📁 目录结构
 
 ```
+首次安装.bat / 启动日常.bat / 静默日常.bat   一键启动脚本（GBK 编码）
 assets/resource/pipeline/   自写流水线 JSON（MaaFw 协议）
 assets/resource/image/      模板图        ┐
 assets/resource/model/ocr/  OCR 模型      ├ 由 fetch-assets 生成，不入库
@@ -169,7 +187,7 @@ assets/maa-vendor/          数据表        ┘
 src/ak_auto/                应用代码（设备/调度/配置/报告 + 各任务）
 src/ak_auto/tasks/          各任务的 Custom Action
 docs/images/                README 截图
-tools/                      资源获取 / 窗口探测 / 流水线校验
+tools/                      资源获取 / 窗口探测 / 流水线校验 / 启动脚本生成
 tests/                      测试（pytest）
 config/                     config.example.json 等
 ```
