@@ -27,16 +27,16 @@
     "roi": [916, 479, 300, 150],
     "action": "Click",
     "post_delay": 1500,
-    "next": ["Fight@StartAction"]
+    "next": ["Fight@StartAction", "Fight@SanityShort"]
   },
 
   "Fight@StartAction": {
     "recognition": "OCR",
     "expected": "开始行动",
-    "roi": [1050, 600, 230, 100],
+    "roi": [1080, 620, 200, 80],
     "action": "Click",
-    "post_delay": 1500,
-    "next": ["Fight@SanityShort", "Fight@InFormation"]
+    "post_delay": 2000,
+    "next": ["Fight@SanityShort", "Fight@FormationStart"]
   },
 
   "Fight@SanityShort": {
@@ -48,11 +48,29 @@
     "next": ["Fight@Done"]
   },
 
-  "Fight@InFormation": {
+  "Fight@FormationStart": {
+    "action": "Click",
+    "target": [1052, 463, 106, 59],
+    "post_delay": 2000,
+    "timeout": 300000,
+    "next": ["Fight@BattleEnd"]
+  },
+
+  "Fight@BattleEnd": {
     "recognition": "OCR",
-    "expected": "编队|开始作战",
-    "roi": [900, 600, 350, 100],
-    "action": "DoNothing"
+    "expected": "行动结束",
+    "roi": [0, 100, 400, 150],
+    "action": "Click",
+    "target": [640, 360, 1, 1],
+    "post_delay": 1200,
+    "next": ["Fight@Settlement"]
+  },
+
+  "Fight@Settlement": {
+    "action": "Click",
+    "target": [640, 360, 1, 1],
+    "post_delay": 1200,
+    "next": ["Fight@Done"]
   },
 
   "Fight@Done": {
