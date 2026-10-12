@@ -40,7 +40,7 @@
     "signin": true
   },
   "runtime": {
-    "task_order": ["StartUp", "Recruit", "Infrast", "Fight", "Mall", "Award", "CloseDown"],
+    "task_order": ["StartUp", "AwardVisit", "Infrast", "Mall", "Recruit", "Fight", "Award", "AwardMail", "AwardSignIn"],
     "retry_per_task": 2,
     "screenshot_on_error": true
   }

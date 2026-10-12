@@ -104,8 +104,8 @@ python -m ak_auto fetch-assets --tag v6.19.0 # 重新拉取 MAA 识别素材
 **日常默认顺序**（可在 `config.json` 的 `runtime.task_order` 覆盖）：
 
 ```
-StartUp → AwardVisit(好友寻访) → Infrast(基建收菜) → Mall(采购)
-        → Recruit(公招) → Fight(刷图) → Award → AwardMail → AwardSignIn → CloseDown
+StartUp → AwardVisit(好友访问) → Infrast(基建收菜) → Mall(采购)
+        → Recruit(公招) → Fight(刷图) → Award → AwardMail → AwardSignIn
 ```
 
 > 先「好友访问 + 基建收菜」赚信用，再「采购」消费，符合信用商店的最优收益顺序。
