@@ -7,31 +7,8 @@
   },
 
   "Fight@Enter": {
-    "recognition": "TemplateMatch",
-    "template": [
-      "UiTheme/Default/Terminal.png",
-      "UiTheme/Dark/Terminal.png",
-      "UiTheme/Sami/Terminal.png",
-      "UiTheme/MistCity/Terminal.png",
-      "UiTheme/Siege/Terminal.png",
-      "UiTheme/Sarkaz/Terminal.png",
-      "UiTheme/Delicious/Terminal.png",
-      "UiTheme/Gaming/Terminal.png",
-      "UiTheme/DahuangCity/Terminal.png",
-      "UiTheme/Dreamland/Day/Terminal.png",
-      "UiTheme/Dreamland/Night/Terminal.png",
-      "UiTheme/JieGarden/Terminal.png",
-      "UiTheme/AveMujica/Terminal.png",
-      "UiTheme/Together/Terminal.png",
-      "UiTheme/LoneTrail/Day/Terminal.png",
-      "UiTheme/LoneTrail/Night/Terminal.png",
-      "UiTheme/Reconstruct/Terminal.png",
-      "UiTheme/Hunting/Terminal.png",
-      "UiTheme/BlackFlow/Terminal.png",
-      "UiTheme/Act/Terminal.png"
-    ],
-    "roi": [844, 58, 268, 272],
     "action": "Click",
+    "target": [844, 58, 268, 272],
     "post_delay": 3000,
     "next": ["Fight@InTerminal"]
   },
@@ -40,6 +17,45 @@
     "recognition": "OCR",
     "expected": "作战",
     "roi": [916, 479, 249, 127],
+    "action": "DoNothing",
+    "next": ["Fight@GoLastBattle"]
+  },
+
+  "Fight@GoLastBattle": {
+    "recognition": "OCR",
+    "expected": "前往上一次作战",
+    "roi": [916, 479, 300, 150],
+    "action": "Click",
+    "post_delay": 1500,
+    "next": ["Fight@StartAction"]
+  },
+
+  "Fight@StartAction": {
+    "recognition": "OCR",
+    "expected": "开始行动",
+    "roi": [1050, 600, 230, 100],
+    "action": "Click",
+    "post_delay": 1500,
+    "next": ["Fight@SanityShort", "Fight@InFormation"]
+  },
+
+  "Fight@SanityShort": {
+    "recognition": "OCR",
+    "expected": "是否花费",
+    "roi": [600, 400, 600, 150],
+    "action": "Click",
+    "target": [0, 0, 180, 80],
+    "next": ["Fight@Done"]
+  },
+
+  "Fight@InFormation": {
+    "recognition": "OCR",
+    "expected": "编队|开始作战",
+    "roi": [900, 600, 350, 100],
+    "action": "DoNothing"
+  },
+
+  "Fight@Done": {
     "action": "DoNothing"
   }
 }
