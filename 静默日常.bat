@@ -1,7 +1,8 @@
 @echo off
 chcp 936 >nul
 cd /d "%~dp0"
-set PYTHONIOENCODING=gbk
+rem 输出走文件，用 UTF-8 写日志更好看；控制台本身是 936。
+set PYTHONIOENCODING=utf-8
 
 if not exist ".venv\Scripts\python.exe" (
     echo [错误] 还没安装。请先双击运行「首次安装.bat」。

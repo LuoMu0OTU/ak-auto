@@ -66,7 +66,7 @@ def run_sequence(
 ) -> list[TaskResult]:
     """按顺序运行多个任务；单任务失败重试，仍失败则跳过并继续。"""
     results: list[TaskResult] = []
-    avail = available if available is not None else set(tasker.resource().node_list)
+    avail = available if available is not None else set(tasker.resource.node_list)
     for entry in entries:
         if entry not in avail:
             results.append(TaskResult(entry, False, "missing-node", 0, []))
