@@ -41,3 +41,28 @@ def best_tag_combination(available_tags: list[str], min_rarity: int = 4) -> tupl
         if best_score is None or score < best_score:
             best_combo, best_ops, best_score = combo, ops, score
     return best_combo, best_ops
+
+
+def best_selection(available_tags: list[str]) -> list[str]:
+    """返回最佳标签选择。
+
+    优先级：保底 4★ 组合 > 保底 3★ 组合 > 单个能出最高稀有度的标签。
+    数据驱动，等价于公招「选标签表」的保底逻辑。
+    """
+    combo, _ops = best_tag_combination(available_tags, 4)
+    if combo:
+        return combo
+    combo, _ops = best_tag_combination(available_tags, 3)
+    if combo:
+        return combo
+    # 无保底：选单个能出最高稀有度的标签（通常是职业标签）
+    best_tag = ""
+    best_rarity = 0
+    for tag in available_tags:
+        ops = match_operators([tag])
+        if not ops:
+            continue
+        top = max(o["rarity"] for o in ops)
+        if top > best_rarity:
+            best_tag, best_rarity = tag, top
+    return [best_tag] if best_tag else []

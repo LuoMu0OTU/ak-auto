@@ -7,31 +7,8 @@
   },
 
   "Recruit@Enter": {
-    "recognition": "TemplateMatch",
-    "template": [
-      "UiTheme/Default/Recruit.png",
-      "UiTheme/Dark/Recruit.png",
-      "UiTheme/Sami/Recruit.png",
-      "UiTheme/MistCity/Recruit.png",
-      "UiTheme/Siege/Recruit.png",
-      "UiTheme/Sarkaz/Recruit.png",
-      "UiTheme/Delicious/Recruit.png",
-      "UiTheme/Gaming/Recruit.png",
-      "UiTheme/DahuangCity/Recruit.png",
-      "UiTheme/Dreamland/Day/Recruit.png",
-      "UiTheme/Dreamland/Night/Recruit.png",
-      "UiTheme/JieGarden/Recruit.png",
-      "UiTheme/AveMujica/Recruit.png",
-      "UiTheme/Together/Recruit.png",
-      "UiTheme/LoneTrail/Day/Recruit.png",
-      "UiTheme/LoneTrail/Night/Recruit.png",
-      "UiTheme/Reconstruct/Recruit.png",
-      "UiTheme/Hunting/Recruit.png",
-      "UiTheme/BlackFlow/Recruit.png",
-      "UiTheme/Act/Recruit.png"
-    ],
-    "roi": [925, 425, 200, 150],
     "action": "Click",
+    "target": [935, 480, 145, 61],
     "post_delay": 1200,
     "next": ["Recruit@OnRecruitScreen"]
   },
@@ -40,6 +17,38 @@
     "recognition": "OCR",
     "expected": "公开招募",
     "roi": [50, 100, 230, 100],
-    "action": "DoNothing"
+    "action": "DoNothing",
+    "next": ["Recruit@ClickRecruit"]
+  },
+
+  "Recruit@ClickRecruit": {
+    "recognition": "OCR",
+    "expected": "开始招募干员",
+    "roi": [0, 250, 1280, 470],
+    "action": "Click",
+    "post_delay": 1500,
+    "next": ["Recruit@SelectTags"]
+  },
+
+  "Recruit@SelectTags": {
+    "recognition": "OCR",
+    "roi": [375, 360, 480, 120],
+    "action": "Custom",
+    "custom_action": "RecruitSelectTags",
+    "post_delay": 500,
+    "next": ["Recruit@SetTimer"]
+  },
+
+  "Recruit@SetTimer": {
+    "action": "Click",
+    "target": [590, 255, 50, 50],
+    "post_delay": 800,
+    "next": ["Recruit@Confirm"]
+  },
+
+  "Recruit@Confirm": {
+    "action": "Click",
+    "target": [960, 566, 32, 32],
+    "post_delay": 1500
   }
 }

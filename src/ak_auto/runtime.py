@@ -32,9 +32,17 @@ def load_resource(cfg: AppConfig) -> Resource:
 
 
 def build_tasker(cfg: AppConfig, controller) -> Tasker:
-    """装配 Tasker：绑定资源与控制器。"""
+    """装配 Tasker：绑定资源与控制器，并注册自定义识别/动作。"""
     res = load_resource(cfg)
+    _register_custom(res)
     tasker = Tasker()
     if not tasker.bind(res, controller):
         raise RuntimeError("Tasker.bind 失败")
     return tasker
+
+
+def _register_custom(res: Resource) -> None:
+    """注册各任务的自定义动作/识别。"""
+    from .tasks import recruit
+
+    recruit.register(res)
