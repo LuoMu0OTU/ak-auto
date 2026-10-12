@@ -34,3 +34,16 @@ def stage_ap_cost(code: str) -> Optional[int]:
 def stage_id(code: str) -> Optional[str]:
     s = find_stage(code)
     return s.get("stageId") if s else None
+
+
+def max_loops(sanity: int, ap_cost: int) -> int:
+    """当前理智最多能打几次该关卡（向下取整）。
+
+    >>> max_loops(164, 6)
+    27
+    >>> max_loops(5, 6)
+    0
+    """
+    if ap_cost <= 0 or sanity <= 0:
+        return 0
+    return sanity // ap_cost

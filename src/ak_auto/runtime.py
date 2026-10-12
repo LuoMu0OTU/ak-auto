@@ -43,7 +43,8 @@ def build_tasker(cfg: AppConfig, controller) -> Tasker:
 
 def _register_custom(res: Resource) -> None:
     """注册各任务的自定义动作/识别。"""
-    from .tasks import mall, recruit
+    from .tasks import fight, mall, recruit
 
     recruit.register(res)
     mall.register(res)
+    fight.register(res)

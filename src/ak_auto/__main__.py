@@ -157,18 +157,23 @@ def run(
         typer.echo("未找到游戏窗口，自动启动也没成功。请确认 config 的 startup.game_path，或手动打开游戏。")
         raise typer.Exit(1)
 
-    sc = device.parse_screencap(cfg.device.screencap[0])
-    ctrl = device.connect_controller(
-        win["hwnd"], sc,
-        device.parse_input(cfg.device.mouse_input[0]),
-        device.parse_input(cfg.device.keyboard_input),
-    )
-    tasker = build_tasker(cfg, ctrl)
-    result = run_task(tasker, task)
-    typer.echo(result.summary)
-    for n in result.nodes:
-        typer.echo(f"  - {n}")
-    raise typer.Exit(0 if result.ok else 1)
+    try:
+        sc = device.parse_screencap(cfg.device.screencap[0])
+        ctrl = device.connect_controller(
+            win["hwnd"], sc,
+            device.parse_input(cfg.device.mouse_input[0]),
+            device.parse_input(cfg.device.keyboard_input),
+        )
+        tasker = build_tasker(cfg, ctrl)
+        result = run_task(tasker, task)
+        typer.echo(result.summary)
+        for n in result.nodes:
+            typer.echo(f"  - {n}")
+        code = 0 if result.ok else 1
+    finally:
+        # MaaFw 会把游戏窗口伪最小化，结束前务必还原
+        device.restore_window(win["hwnd"])
+    raise typer.Exit(code)
 
 
 @app.command("daily")
@@ -187,29 +192,33 @@ def daily(config: str = typer.Option("", "--config", help="config.json 路径"))
         typer.echo("未找到游戏窗口，自动启动也没成功。请确认 config 的 startup.game_path，或手动打开游戏。")
         raise typer.Exit(1)
 
-    sc = device.parse_screencap(cfg.device.screencap[0])
-    ctrl = device.connect_controller(
-        win["hwnd"], sc,
-        device.parse_input(cfg.device.mouse_input[0]),
-        device.parse_input(cfg.device.keyboard_input),
-    )
-    tasker = build_tasker(cfg, ctrl)
-    # 每个任务前先回主界面，保证任务之间不串场
-    entries: list[str] = []
-    for t in cfg.runtime.task_order:
-        if t != "StartUp":
-            entries.append("ReturnToHome")
-        entries.append(t)
-    results = run_sequence(
-        tasker,
-        entries,
-        cfg.runtime.retry_per_task,
-        on_progress=typer.echo,
-    )
-    report = make_report(results)
-    typer.echo("\n" + report.render())
-    typer.echo(f"报告已保存：{report.save()}")
-    raise typer.Exit(0 if report.all_ok else 1)
+    try:
+        sc = device.parse_screencap(cfg.device.screencap[0])
+        ctrl = device.connect_controller(
+            win["hwnd"], sc,
+            device.parse_input(cfg.device.mouse_input[0]),
+            device.parse_input(cfg.device.keyboard_input),
+        )
+        tasker = build_tasker(cfg, ctrl)
+        # 每个任务前先回主界面，保证任务之间不串场
+        entries: list[str] = []
+        for t in cfg.runtime.task_order:
+            if t != "StartUp":
+                entries.append("ReturnToHome")
+            entries.append(t)
+        results = run_sequence(
+            tasker,
+            entries,
+            cfg.runtime.retry_per_task,
+            on_progress=typer.echo,
+        )
+        report = make_report(results)
+        typer.echo("\n" + report.render())
+        typer.echo(f"报告已保存：{report.save()}")
+        code = 0 if report.all_ok else 1
+    finally:
+        device.restore_window(win["hwnd"])
+    raise typer.Exit(code)
 
 
 @app.command("lint")

@@ -253,6 +253,93 @@ def connect_controller(hwnd: Any, screencap: int, mouse: int, keyboard: int) -> 
     return ctrl
 
 
+class _POINT(ctypes.Structure):
+    _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
+
+
+class _RECT(ctypes.Structure):
+    _fields_ = [("left", ctypes.c_long), ("top", ctypes.c_long),
+                ("right", ctypes.c_long), ("bottom", ctypes.c_long)]
+
+
+def client_to_screen(hwnd: Any, x: int, y: int) -> tuple[int, int]:
+    """把窗口客户区坐标换算成屏幕坐标。"""
+    user32 = ctypes.windll.user32
+    rect = _RECT()
+    user32.GetClientRect(hwnd, ctypes.byref(rect))
+    origin = _POINT(0, 0)
+    user32.ClientToScreen(hwnd, ctypes.byref(origin))
+    cw = rect.right - rect.left or 1
+    ch = rect.bottom - rect.top or 1
+    return origin.x + int(x * cw / 1280), origin.y + int(y * ch / 720)
+
+
+def native_wheel(hwnd: Any, x: int, y: int, notches: int, gap: float = 0.06) -> None:
+    """在窗口客户区 (x, y) 处发真实鼠标滚轮（正数向上）。
+
+    部分游戏（如明日方舟 PC 端）不响应 MaaFw 的 SendMessage/PostMessage 滚轮，
+    必须移动真实光标 + 硬件滚轮事件才生效。
+    """
+    import time
+
+    user32 = ctypes.windll.user32
+    sx, sy = client_to_screen(hwnd, x, y)
+    user32.SetCursorPos(sx, sy)
+    time.sleep(0.15)
+    step = 120 if notches > 0 else -120
+    for _ in range(abs(notches)):
+        user32.mouse_event(0x0800, 0, 0, step, 0)  # MOUSEEVENTF_WHEEL
+        time.sleep(gap)
+
+
+def bright_rows(
+    img: np.ndarray,
+    x0: int = 992,
+    x1: int = 1020,
+    y0: int = 170,
+    y1: int = 620,
+    threshold: int = 200,
+) -> list[tuple[int, int]]:
+    """扫描一列，返回 (y中心, 峰值亮度) 的亮行列表（用于判断「白色数字」）。"""
+    rows: list[tuple[int, int]] = []
+    y = y0
+    while y < y1:
+        band = img[max(0, y - 8): y + 8, x0:x1]
+        if band.size and band.mean(axis=2).max() >= threshold:
+            rows.append((y, int(band.mean(axis=2).max())))
+            y += 20
+        else:
+            y += 4
+    return rows
+
+
+def restore_window(hwnd: Any) -> bool:
+    """把被 MaaFw 伪最小化的窗口还原（挪回屏幕 + 取消最小化）。
+
+    MaaFw 的 Win32 控制器在运行期间会把游戏窗口移到屏幕外并最小化，
+    正常 destroy 时会还原；但进程被强杀就会卡在最小化状态，必须手动救。
+    """
+    import time
+
+    if not hwnd:
+        return False
+    user32 = ctypes.windll.user32
+    try:
+        if user32.IsIconic(hwnd):
+            user32.SendMessageW(hwnd, 0x0112, 0xF120, 0)  # WM_SYSCOMMAND / SC_RESTORE
+            time.sleep(0.3)
+        rect = _RECT()
+        user32.GetWindowRect(hwnd, ctypes.byref(rect))
+        if rect.left < -10000:  # 被挪到屏幕外
+            user32.ShowWindow(hwnd, 9)  # SW_RESTORE
+            user32.SetWindowPos(hwnd, 0, 409, 0, 1295, 757, 0x0040)  # SWP_SHOWWINDOW
+        user32.ShowWindow(hwnd, 9)
+        user32.SetForegroundWindow(hwnd)
+        return True
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def capture(ctrl: Win32Controller) -> np.ndarray:
     """抓取一帧；空图抛异常。"""
     img = ctrl.post_screencap().wait().get()

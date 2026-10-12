@@ -27,6 +27,34 @@
     "roi": [916, 479, 300, 150],
     "action": "Click",
     "post_delay": 1500,
+    "next": ["Fight@SetRepeat", "Fight@StartAction", "Fight@SanityShort"]
+  },
+
+  "Fight@OcrSanity": {
+    "recognition": "OCR",
+    "roi": [1120, 5, 160, 55],
+    "action": "DoNothing"
+  },
+
+  "Fight@OcrCount": {
+    "recognition": "OCR",
+    "roi": [950, 570, 110, 40],
+    "action": "DoNothing"
+  },
+
+  "Fight@OcrTotal": {
+    "recognition": "OCR",
+    "roi": [1150, 660, 120, 45],
+    "action": "DoNothing"
+  },
+
+  "Fight@SetRepeat": {
+    "recognition": "OCR",
+    "expected": "代理指挥",
+    "roi": [1100, 555, 170, 50],
+    "action": "Custom",
+    "custom_action": "FightSetRepeatCount",
+    "on_error": ["Fight@StartAction"],
     "next": ["Fight@StartAction", "Fight@SanityShort"]
   },
 
