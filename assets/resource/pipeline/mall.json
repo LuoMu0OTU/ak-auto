@@ -9,15 +9,13 @@
   "Mall@Enter": {
     "action": "Click",
     "target": [822, 457, 86, 71],
-    "post_delay": 1200,
+    "post_delay": 1500,
     "next": ["Mall@CreditStore"]
   },
 
   "Mall@CreditStore": {
-    "recognition": "OCR",
-    "expected": "信用交易所",
-    "roi": [1000, 0, 280, 300],
     "action": "Click",
+    "target": [1152, 95, 104, 22],
     "post_delay": 1500,
     "next": ["Mall@CollectCredit"]
   },
@@ -29,9 +27,21 @@
     "next": ["Mall@Buy"]
   },
 
+  "Mall@OcrCredit": {
+    "recognition": "OCR",
+    "roi": [1100, 0, 180, 60],
+    "action": "DoNothing"
+  },
+
+  "Mall@OcrItems": {
+    "recognition": "OCR",
+    "roi": [0, 120, 1280, 560],
+    "action": "DoNothing"
+  },
+
   "Mall@Buy": {
     "recognition": "OCR",
-    "roi": [80, 140, 1120, 470],
+    "roi": [0, 120, 1280, 560],
     "action": "Custom",
     "custom_action": "MallSelectBuy",
     "on_error": ["Mall@Done"],
@@ -50,7 +60,7 @@
   "Mall@Confirm2": {
     "action": "Click",
     "target": [940, 540, 260, 140],
-    "post_delay": 1000,
+    "post_delay": 1200,
     "next": ["Mall@Buy"]
   },
 
