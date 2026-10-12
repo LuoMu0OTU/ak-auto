@@ -221,6 +221,22 @@ def daily(config: str = typer.Option("", "--config", help="config.json 路径"))
     raise typer.Exit(code)
 
 
+@app.command("restore")
+def restore() -> None:
+    """还原被 MaaFw 伪最小化的游戏窗口（窗口「打不开」时用）。"""
+    from ak_auto import device
+    from ak_auto.config import AppConfig
+
+    device.init_maa()
+    cfg = AppConfig.load()
+    win = device.find_game_window(cfg)
+    if not win:
+        typer.echo("没找到游戏窗口（进程没在跑？）")
+        raise typer.Exit(1)
+    ok = device.restore_window(win["hwnd"])
+    typer.echo(f"{'已还原' if ok else '尝试还原失败'}：hwnd={win['hwnd']}")
+
+
 @app.command("lint")
 def lint() -> None:
     """流水线静态校验。"""
