@@ -1,0 +1,58 @@
+{
+  "Mall": {
+    "next": [
+      "Mall@Enter",
+      "Mall@CreditStore"
+    ]
+  },
+
+  "Mall@Enter": {
+    "recognition": "TemplateMatch",
+    "template": [
+      "UiTheme/Default/Mall.png",
+      "UiTheme/Dark/Mall.png",
+      "UiTheme/Sami/Mall.png",
+      "UiTheme/MistCity/Mall.png",
+      "UiTheme/Siege/Mall.png",
+      "UiTheme/Sarkaz/Mall.png",
+      "UiTheme/Delicious/Mall.png",
+      "UiTheme/Gaming/Mall.png",
+      "UiTheme/DahuangCity/Mall.png",
+      "UiTheme/Dreamland/Day/Mall.png",
+      "UiTheme/Dreamland/Night/Mall.png",
+      "UiTheme/JieGarden/Mall.png",
+      "UiTheme/AveMujica/Mall.png",
+      "UiTheme/Together/Mall.png",
+      "UiTheme/LoneTrail/Day/Mall.png",
+      "UiTheme/LoneTrail/Night/Mall.png",
+      "UiTheme/Reconstruct/Mall.png",
+      "UiTheme/Hunting/Mall.png",
+      "UiTheme/BlackFlow/Mall.png",
+      "UiTheme/Act/Mall.png"
+    ],
+    "roi": [772, 407, 186, 171],
+    "action": "Click",
+    "post_delay": 1200,
+    "next": ["Mall@CreditStore"]
+  },
+
+  "Mall@CreditStore": {
+    "recognition": "OCR",
+    "expected": "信用交易所",
+    "roi": [1000, 0, 280, 300],
+    "action": "Click",
+    "post_delay": 1500,
+    "next": ["Mall@CollectCredit"]
+  },
+
+  "Mall@CollectCredit": {
+    "action": "Click",
+    "target": [900, 0, 250, 100],
+    "post_delay": 2000,
+    "next": ["Mall@Done"]
+  },
+
+  "Mall@Done": {
+    "action": "DoNothing"
+  }
+}

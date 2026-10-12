@@ -1,0 +1,50 @@
+{
+  "Award": {
+    "next": [
+      "Award@Enter",
+      "Award@Receive"
+    ]
+  },
+
+  "Award@Enter": {
+    "recognition": "TemplateMatch",
+    "template": [
+      "UiTheme/Default/Task.png",
+      "UiTheme/Dark/Task.png",
+      "UiTheme/Sami/Task.png",
+      "UiTheme/MistCity/Task.png",
+      "UiTheme/Siege/Task.png",
+      "UiTheme/Sarkaz/Task.png",
+      "UiTheme/Delicious/Task.png",
+      "UiTheme/Gaming/Task.png",
+      "UiTheme/DahuangCity/Task.png",
+      "UiTheme/Dreamland/Day/Task.png",
+      "UiTheme/Dreamland/Night/Task.png",
+      "UiTheme/JieGarden/Task.png",
+      "UiTheme/AveMujica/Task.png",
+      "UiTheme/Together/Task.png",
+      "UiTheme/LoneTrail/Day/Task.png",
+      "UiTheme/LoneTrail/Night/Task.png",
+      "UiTheme/Reconstruct/Task.png",
+      "UiTheme/Hunting/Task.png",
+      "UiTheme/BlackFlow/Task.png",
+      "UiTheme/Act/Task.png"
+    ],
+    "roi": [700, 530, 230, 190],
+    "action": "Click",
+    "post_delay": 1200,
+    "next": ["Award@Receive"]
+  },
+
+  "Award@Receive": {
+    "action": "Click",
+    "target": [950, 50, 330, 150],
+    "pre_delay": 500,
+    "post_delay": 800,
+    "next": ["Award@Done"]
+  },
+
+  "Award@Done": {
+    "action": "DoNothing"
+  }
+}

@@ -1,0 +1,9 @@
+# 运行时依赖（Python 3.12；3.14 缺 onnxruntime 等轮子，不要用默认 python）
+maafw==5.14.3
+numpy>=1.26
+Pillow>=10.0
+pydantic>=2.6
+typer>=0.12
+
+# 开发/测试
+pytest>=8.0

@@ -1,0 +1,13 @@
+{
+  "Infrast": {
+    "next": [
+      "Infrast@Enter"
+    ]
+  },
+
+  "Infrast@Enter": {
+    "action": "Click",
+    "target": [935, 570, 85, 75],
+    "post_delay": 5000
+  }
+}

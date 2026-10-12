@@ -1,0 +1,45 @@
+{
+  "Fight": {
+    "next": [
+      "Fight@Enter",
+      "Fight@InTerminal"
+    ]
+  },
+
+  "Fight@Enter": {
+    "recognition": "TemplateMatch",
+    "template": [
+      "UiTheme/Default/Terminal.png",
+      "UiTheme/Dark/Terminal.png",
+      "UiTheme/Sami/Terminal.png",
+      "UiTheme/MistCity/Terminal.png",
+      "UiTheme/Siege/Terminal.png",
+      "UiTheme/Sarkaz/Terminal.png",
+      "UiTheme/Delicious/Terminal.png",
+      "UiTheme/Gaming/Terminal.png",
+      "UiTheme/DahuangCity/Terminal.png",
+      "UiTheme/Dreamland/Day/Terminal.png",
+      "UiTheme/Dreamland/Night/Terminal.png",
+      "UiTheme/JieGarden/Terminal.png",
+      "UiTheme/AveMujica/Terminal.png",
+      "UiTheme/Together/Terminal.png",
+      "UiTheme/LoneTrail/Day/Terminal.png",
+      "UiTheme/LoneTrail/Night/Terminal.png",
+      "UiTheme/Reconstruct/Terminal.png",
+      "UiTheme/Hunting/Terminal.png",
+      "UiTheme/BlackFlow/Terminal.png",
+      "UiTheme/Act/Terminal.png"
+    ],
+    "roi": [844, 58, 268, 272],
+    "action": "Click",
+    "post_delay": 3000,
+    "next": ["Fight@InTerminal"]
+  },
+
+  "Fight@InTerminal": {
+    "recognition": "OCR",
+    "expected": "作战",
+    "roi": [916, 479, 249, 127],
+    "action": "DoNothing"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "device": {
+    "kind": "win32",
+    "window_match": { "class_name": "", "title_contains": "明日方舟", "process_name": "Arknights" },
+    "screencap": ["FramePool|PrintWindow", "DXGI_DesktopDup_Window|ScreenDC"],
+    "mouse_input": ["SendMessageWithCursorPos", "PostMessageWithCursorPos", "AnchoredTouch", "Seize"],
+    "keyboard_input": "PostMessage",
+    "inference": "directml"
+  },
+  "startup": {
+    "game_path": "E:\\Arknights\\Arknights.exe",
+    "launch": true
+  },
+  "fight": {
+    "stage": "CE-6",
+    "times": 0,
+    "medicine": 0,
+    "stone": 0,
+    "series": true
+  },
+  "infrast": {
+    "collect": true,
+    "shift_presets": [],
+    "morale_threshold": 0.3
+  },
+  "recruit": {
+    "max_times": 4,
+    "ensure_4star": true,
+    "time_hours": 9,
+    "expedite": false
+  },
+  "mall": {
+    "buy_first": ["招聘许可", "寻访凭证"],
+    "blacklist": ["家具零件"]
+  },
+  "award": {
+    "daily": true,
+    "weekly": true,
+    "mail": true,
+    "signin": true
+  },
+  "runtime": {
+    "task_order": ["StartUp", "Recruit", "Infrast", "Fight", "Mall", "Award", "CloseDown"],
+    "retry_per_task": 2,
+    "screenshot_on_error": true
+  }
+}

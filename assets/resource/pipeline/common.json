@@ -1,0 +1,99 @@
+{
+  "StartUp": {
+    "next": [
+      "StartUp@IsHome",
+      "StartUp@Loading",
+      "StartUp@TapToWake",
+      "StartUp@CloseAnno",
+      "StartUp@Offline"
+    ]
+  },
+
+  "StartUp@IsHome": {
+    "recognition": "TemplateMatch",
+    "template": "UiTheme/SwitchTheme/SwitchTheme@ToggleSettingsMenu.png",
+    "roi": [227, 327, 159, 152],
+    "action": "DoNothing",
+    "post_delay": 1500
+  },
+
+  "StartUp@Loading": {
+    "recognition": "TemplateMatch",
+    "template": "LoadingIcon.png",
+    "roi": [480, 210, 320, 280],
+    "action": "DoNothing",
+    "post_delay": 2000,
+    "next": ["StartUp"]
+  },
+
+  "StartUp@TapToWake": {
+    "recognition": "Or",
+    "any_of": [
+      { "recognition": "TemplateMatch", "template": "WakeUp/GameStart.png" },
+      { "recognition": "TemplateMatch", "template": "WakeUp/StartToWakeUp.png" },
+      { "recognition": "TemplateMatch", "template": "WakeUp/StartUpConnectingFlag.png" }
+    ],
+    "action": "Click",
+    "next": ["StartUp"]
+  },
+
+  "StartUp@CloseAnno": {
+    "action": "Click",
+    "target": [1100, 0, 180, 200],
+    "next": ["StartUp"]
+  },
+
+  "StartUp@Offline": {
+    "recognition": "TemplateMatch",
+    "template": "OfflineConfirm.png",
+    "roi": [310, 409, 648, 165],
+    "action": "Click",
+    "next": ["StartUp"]
+  },
+
+  "ReturnToHome": {
+    "next": [
+      "ReturnToHome@IsHome",
+      "ReturnToHome@ReturnConfirm",
+      "ReturnToHome@ReturnButton",
+      "ReturnToHome@CloseAnno"
+    ]
+  },
+
+  "ReturnToHome@IsHome": {
+    "recognition": "TemplateMatch",
+    "template": "UiTheme/SwitchTheme/SwitchTheme@ToggleSettingsMenu.png",
+    "roi": [227, 327, 159, 152],
+    "action": "DoNothing"
+  },
+
+  "ReturnToHome@ReturnButton": {
+    "recognition": "TemplateMatch",
+    "template": ["ReturnButton/Return.png", "ReturnButton/Return-White.png"],
+    "threshold": [0.7, 0.7],
+    "roi": [0, 0, 180, 80],
+    "action": "Click",
+    "next": ["ReturnToHome"]
+  },
+
+  "ReturnToHome@ReturnConfirm": {
+    "recognition": "TemplateMatch",
+    "template": "PopupConfirm.png",
+    "roi": [630, 400, 650, 160],
+    "action": "Click",
+    "next": ["ReturnToHome"]
+  },
+
+  "ReturnToHome@CloseAnno": {
+    "action": "Click",
+    "target": [1100, 0, 180, 200],
+    "next": ["ReturnToHome"]
+  },
+
+  "Home": {
+    "recognition": "TemplateMatch",
+    "template": "UiTheme/SwitchTheme/SwitchTheme@ToggleSettingsMenu.png",
+    "roi": [227, 327, 159, 152],
+    "action": "StopTask"
+  }
+}

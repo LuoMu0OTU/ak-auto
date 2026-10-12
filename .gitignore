@@ -1,0 +1,23 @@
+# 环境
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+
+# 本机私有配置与运行产物
+config/config.json
+logs/
+debug/
+
+# 由 tools/fetch_maa_assets.py 生成的第三方资源（可重现，不入库）
+assets/maa-vendor/
+assets/resource/image/
+assets/resource/model/ocr/
+assets/MANIFEST.json
+assets/resource/pipeline/generated/
+
+# 抓帧/录制夹具中的大图
+tests/fixtures/**/*.tmp.png
