@@ -87,8 +87,8 @@ class AwardConfig(BaseModel):
 class RuntimeConfig(BaseModel):
     task_order: list[str] = Field(
         default_factory=lambda: [
-            "StartUp", "Recruit", "Infrast", "Fight", "Mall", "Award",
-            "AwardMail", "AwardSignIn", "CloseDown",
+            "StartUp", "AwardVisit", "Infrast", "Mall", "Recruit", "Fight",
+            "Award", "AwardMail", "AwardSignIn", "CloseDown",
         ]
     )
     retry_per_task: int = 2
