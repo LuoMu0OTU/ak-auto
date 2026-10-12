@@ -40,5 +40,25 @@
     "roi": [900, 600, 350, 100],
     "action": "Click",
     "post_delay": 1000
+  },
+
+  "AwardSignIn": {
+    "next": [
+      "AwardSignIn@ClickSignIn",
+      "AwardSignIn@Claim"
+    ]
+  },
+
+  "AwardSignIn@ClickSignIn": {
+    "action": "Click",
+    "target": [280, 40, 1, 1],
+    "post_delay": 1500,
+    "next": ["AwardSignIn@Claim"]
+  },
+
+  "AwardSignIn@Claim": {
+    "action": "Click",
+    "target": [1000, 590, 200, 70],
+    "post_delay": 1000
   }
 }
