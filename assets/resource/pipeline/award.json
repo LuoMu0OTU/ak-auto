@@ -7,31 +7,8 @@
   },
 
   "Award@Enter": {
-    "recognition": "TemplateMatch",
-    "template": [
-      "UiTheme/Default/Task.png",
-      "UiTheme/Dark/Task.png",
-      "UiTheme/Sami/Task.png",
-      "UiTheme/MistCity/Task.png",
-      "UiTheme/Siege/Task.png",
-      "UiTheme/Sarkaz/Task.png",
-      "UiTheme/Delicious/Task.png",
-      "UiTheme/Gaming/Task.png",
-      "UiTheme/DahuangCity/Task.png",
-      "UiTheme/Dreamland/Day/Task.png",
-      "UiTheme/Dreamland/Night/Task.png",
-      "UiTheme/JieGarden/Task.png",
-      "UiTheme/AveMujica/Task.png",
-      "UiTheme/Together/Task.png",
-      "UiTheme/LoneTrail/Day/Task.png",
-      "UiTheme/LoneTrail/Night/Task.png",
-      "UiTheme/Reconstruct/Task.png",
-      "UiTheme/Hunting/Task.png",
-      "UiTheme/BlackFlow/Task.png",
-      "UiTheme/Act/Task.png"
-    ],
-    "roi": [700, 530, 230, 190],
     "action": "Click",
+    "target": [700, 530, 230, 190],
     "post_delay": 1200,
     "next": ["Award@Receive"]
   },
@@ -40,11 +17,28 @@
     "action": "Click",
     "target": [950, 50, 330, 150],
     "pre_delay": 500,
-    "post_delay": 800,
-    "next": ["Award@Done"]
+    "post_delay": 800
   },
 
-  "Award@Done": {
-    "action": "DoNothing"
+  "AwardMail": {
+    "next": [
+      "AwardMail@ClickMail",
+      "AwardMail@ReceiveAll"
+    ]
+  },
+
+  "AwardMail@ClickMail": {
+    "action": "Click",
+    "target": [194, 39, 1, 1],
+    "post_delay": 1500,
+    "next": ["AwardMail@ReceiveAll"]
+  },
+
+  "AwardMail@ReceiveAll": {
+    "recognition": "OCR",
+    "expected": "收取所有邮件",
+    "roi": [900, 600, 350, 100],
+    "action": "Click",
+    "post_delay": 1000
   }
 }

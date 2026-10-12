@@ -12,7 +12,7 @@
 
   "StartUp@DismissPopup": {
     "recognition": "OCR",
-    "expected": ["寻访现已开放", "博士"],
+    "expected": ["寻访现已开放", "博士，您来了"],
     "roi": [0, 0, 1280, 720],
     "action": "Click",
     "target": [640, 360, 1, 1],
@@ -50,7 +50,7 @@
 
   "StartUp@CloseAnno": {
     "action": "Click",
-    "target": [1100, 0, 180, 200],
+    "target": [1050, 60, 230, 140],
     "next": ["StartUp"]
   },
 
@@ -74,7 +74,7 @@
 
   "ReturnToHome@DismissPopup": {
     "recognition": "OCR",
-    "expected": ["寻访现已开放", "博士"],
+    "expected": ["寻访现已开放", "博士，您来了"],
     "roi": [0, 0, 1280, 720],
     "action": "Click",
     "target": [640, 360, 1, 1],
@@ -108,7 +108,7 @@
 
   "ReturnToHome@CloseAnno": {
     "action": "Click",
-    "target": [1100, 0, 180, 200],
+    "target": [1050, 60, 230, 140],
     "next": ["ReturnToHome"]
   },
 
