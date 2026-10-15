@@ -12,6 +12,7 @@ config/config.json
 config/config.json.*.bak
 config/config.json.tmp
 config/_*.json
+config/_*.json.*
 logs/
 debug/
 
