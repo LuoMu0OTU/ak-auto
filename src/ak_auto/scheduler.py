@@ -2,6 +2,7 @@
 
 Phase 1 任务 2 起：结果统一为 domain.ExecutionResult（带 run_id / 状态机 / 错误码）；
 `TaskResult` 保留为别名，旧调用方（report 等）零改动。
+任务 3 起：可通过 bus 参数接收 TaskStarted/TaskProgress/TaskCompleted/TaskFailed 事件。
 """
 from __future__ import annotations
 
@@ -10,7 +11,15 @@ from typing import Optional
 
 from maa.tasker import Tasker
 
-from .domain import ExecutionResult, ExecutionState, StateMachine, new_run_id
+from .domain import (
+    EventBus,
+    EventType,
+    ExecutionResult,
+    ExecutionState,
+    StateMachine,
+    TaskEvent,
+    new_run_id,
+)
 
 # 兼容别名：旧代码 `from .scheduler import TaskResult` 仍可用
 TaskResult = ExecutionResult
@@ -29,7 +38,7 @@ def _detail_status_name(detail) -> str:
     return "unknown"
 
 
-def run_task(tasker: Tasker, entry: str) -> ExecutionResult:
+def run_task(tasker: Tasker, entry: str, bus: Optional[EventBus] = None) -> ExecutionResult:
     """运行单个任务（入口节点）并等待结束，返回结构化结果。
 
     生命周期经状态机跟踪：PENDING → PREPARING → RUNNING → 终态
@@ -40,6 +49,12 @@ def run_task(tasker: Tasker, entry: str) -> ExecutionResult:
     machine = StateMachine(ExecutionState.PENDING)
     machine.transition(ExecutionState.PREPARING)
     machine.transition(ExecutionState.RUNNING)
+
+    if bus:
+        bus.publish(
+            TaskEvent(type=EventType.TASK_STARTED, run_id=run_id, task_id=entry,
+                      state=ExecutionState.RUNNING)
+        )
 
     job = tasker.post_task(entry)
     job.wait()
@@ -65,6 +80,18 @@ def run_task(tasker: Tasker, entry: str) -> ExecutionResult:
     except Exception:  # noqa: BLE001
         pass
 
+    if bus:
+        bus.publish(
+            TaskEvent(
+                type=EventType.TASK_COMPLETED if state is ExecutionState.SUCCEEDED else EventType.TASK_FAILED,
+                run_id=run_id,
+                task_id=entry,
+                state=state,
+                message=error,
+                diagnostic={"nodes": nodes, "duration_ms": dt},
+            )
+        )
+
     return ExecutionResult(
         run_id=run_id,
         task_id=entry,
@@ -83,6 +110,7 @@ def run_sequence(
     retry_per_task: int = 2,
     available: Optional[set[str]] = None,
     on_progress=None,
+    bus: Optional[EventBus] = None,
 ) -> list[ExecutionResult]:
     """按顺序运行多个任务；单任务失败重试，仍失败则跳过并继续。"""
     results: list[ExecutionResult] = []
@@ -105,7 +133,16 @@ def run_sequence(
         for attempt in range(1 + retry_per_task):
             if on_progress:
                 on_progress(f"[run] {entry} (第 {attempt + 1} 次)")
-            result = run_task(tasker, entry)
+            if bus:
+                bus.publish(
+                    TaskEvent(
+                        type=EventType.TASK_PROGRESS,
+                        run_id="",
+                        task_id=entry,
+                        message=f"第 {attempt + 1} 次尝试",
+                    )
+                )
+            result = run_task(tasker, entry, bus=bus)
             if result.ok:
                 break
         if result is not None:

@@ -139,6 +139,26 @@ def fetch_assets(tag: str = typer.Option("v6.19.0", help="MAA 发版 tag")) -> N
     raise typer.Exit(subprocess.run([sys.executable, str(script), "--tag", tag]).returncode)
 
 
+def _event_console_logger(echo):
+    """把事件总线接到控制台输出（TaskProgress 由 on_progress 负责，此处跳过）。"""
+    from ak_auto.domain import EventType, TaskEvent
+
+    def _on(e: TaskEvent) -> None:
+        if e.type is EventType.TASK_PROGRESS:
+            return
+        if e.type is EventType.TASK_STARTED:
+            text = f"[event] ▶ 开始 {e.task_id}（{e.run_id}）"
+        elif e.type is EventType.TASK_COMPLETED:
+            text = f"[event] ✔ 完成 {e.task_id}（{e.run_id}）"
+        elif e.type is EventType.TASK_FAILED:
+            text = f"[event] ✘ 失败 {e.task_id}（{e.message}）"
+        else:
+            text = f"[event] {e.type.value} {e.task_id} {e.message}".rstrip()
+        echo(text)
+
+    return _on
+
+
 @app.command("run")
 def run(
     task: str = typer.Argument(..., help="任务名，如 StartUp / ReturnToHome / Fight / Infrast"),
@@ -147,7 +167,7 @@ def run(
     """连接游戏并运行指定任务。"""
     from ak_auto import device
     from ak_auto.config import AppConfig
-    from ak_auto.domain import resolve_task
+    from ak_auto.domain import EventBus, resolve_task
     from ak_auto.runtime import build_tasker
     from ak_auto.scheduler import run_task
 
@@ -177,7 +197,9 @@ def run(
             device.parse_input(cfg.device.keyboard_input),
         )
         tasker = build_tasker(cfg, ctrl)
-        result = run_task(tasker, entry)
+        bus = EventBus()
+        bus.subscribe_all(_event_console_logger(typer.echo))
+        result = run_task(tasker, entry, bus=bus)
         typer.echo(result.summary)
         for n in result.nodes:
             typer.echo(f"  - {n}")
@@ -193,7 +215,7 @@ def daily(config: str = typer.Option("", "--config", help="config.json 路径"))
     """日常全家桶。"""
     from ak_auto import device
     from ak_auto.config import AppConfig
-    from ak_auto.domain import resolve_task
+    from ak_auto.domain import EventBus, resolve_task
     from ak_auto.report import make_report
     from ak_auto.runtime import build_tasker
     from ak_auto.scheduler import run_sequence
@@ -219,6 +241,8 @@ def daily(config: str = typer.Option("", "--config", help="config.json 路径"))
             device.parse_input(cfg.device.keyboard_input),
         )
         tasker = build_tasker(cfg, ctrl)
+        bus = EventBus()
+        bus.subscribe_all(_event_console_logger(typer.echo))
         # 每个任务前先回主界面，保证任务之间不串场
         entries: list[str] = []
         for t in cfg.runtime.task_order:
@@ -230,6 +254,7 @@ def daily(config: str = typer.Option("", "--config", help="config.json 路径"))
             entries,
             cfg.runtime.retry_per_task,
             on_progress=typer.echo,
+            bus=bus,
         )
         report = make_report(results)
         typer.echo("\n" + report.render())

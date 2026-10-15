@@ -1,5 +1,6 @@
-"""Domain 层：任务定义、状态、策略等核心模型（Phase 1 逐步建立）。"""
+"""Domain 层：任务定义、状态、事件、策略等核心模型（Phase 1 逐步建立）。"""
 
+from .events import EventBus, EventType, TaskEvent
 from .state import (
     ExecutionResult,
     ExecutionState,
@@ -20,4 +21,7 @@ __all__ = [
     "IllegalTransition",
     "StateMachine",
     "new_run_id",
+    "EventBus",
+    "EventType",
+    "TaskEvent",
 ]
