@@ -8,11 +8,11 @@ Agent 可恢复工作状态
 
 更新日期：2026-10-13
 
-当前阶段：Phase 4 高级模式（进行中，起步：配置 Schema 扩展）
+当前阶段：Phase 4 高级模式（全部完成，待人工验收）
 
 当前分支：main
 
-HEAD：203d4df（Phase 3 完成提交）
+HEAD：1cee0bc（第 3/4 项提交；本轮提交号见 git log 最新一条）
 
 工作区状态：干净
 
@@ -66,12 +66,8 @@ HEAD：203d4df（Phase 3 完成提交）
 
 进行中 / 待办
 
-Phase 4 高级模式（按 AGENTS.md 第 3 节）：
-1. 配置 Schema v2：模式（simple/advanced）、自定义预设存储、任务排序、理智/公招/信用策略、重试/超时、诊断开关；迁移 v1→v2 —— 本轮做。
-2. GUI 模式切换（简单/高级，切换不重置参数）+ 高级设置页（参数范围验证/推荐值/恢复默认/风险提示）。
-3. 预设管理：保存/重命名/删除自定义预设（与推荐预设区分）。
-4. 诊断入口：GUI 内跑 doctor/probe、日志级别、失败截图开关。
-5. 全部完成后提交 Phase 4 验收报告，等人工验收。
+- 等人工验收 Phase 4（验收报告：docs/architecture/PHASE4_ACCEPTANCE.md）。
+- 验收通过后：Phase 5 自动化增强（P1 逐项：Fight 选关/连战、基建换班、理智/公招策略消费、截图回归与真机验收）。
 
 
 修改文件
@@ -82,11 +78,11 @@ Phase 4 高级模式（按 AGENTS.md 第 3 节）：
 测试与验证
 
 命令	结果	环境/备注
-python -m pytest -q	77 passed，exit=0（新增：重试链路 3 例、状态区 2 例）	Python 3.12.10 / pytest 9.1.1
-逐项验收矩阵	9/10 任务 OK；Fight 已知失败（P1）	本机真实游戏，详见 docs/architecture/PHASE3_ACCEPTANCE.md
-GUI 完整日常	16/17 成功，状态区「已结束（16/17 成功）」，失败原因可见	本机真实游戏
-缺失节点异常	GhostTask → FAIL (missing-node)，exit 1，无崩溃	本机
-配置生效	真机：task_order 被采纳；单测：设置往返 + retry 链路；fight.stage 未生效（Fight P1 缺陷）	—
+python -m pytest -q	88 passed，exit=0	Python 3.12.10 / pytest 9.1.1
+真机模式切换	简单↔高级，导航可见性/按钮正确，参数不重置	本机
+真机 GUI 诊断页	自检 7 项全部通过，与 CLI doctor 一致	本机真实游戏
+真机自定义预设端到端	高级模式保存「收菜公招」→ 应用 → 执行 6/6 成功（顺序按 task_order）	本机真实游戏
+本地真实 config	v1→v2 无损迁移	—
 
 
 已知问题 / 风险 / 阻塞
@@ -112,7 +108,7 @@ GUI 完整日常	16/17 成功，状态区「已结束（16/17 成功）」，失
 下一轮第一步
 
 1. 重新读取 AGENTS.md、SESSION_START.md、本文件与 docs/ROADMAP.md。
-2. 继续 Phase 4 第 1 项：配置 Schema v2 + 迁移，先输出计划再动手。
+2. 若 Phase 4 已人工验收：进入 Phase 5 自动化增强（P1 逐项，先输出计划再动手）。
 
 
 阶段验收状态
@@ -122,4 +118,4 @@ Phase 0：✅ 已人工验收（2026-10-13）
 Phase 1：✅ 已人工验收（2026-10-13）
 Phase 2：✅ 已人工验收（2026-10-13）
 Phase 3：✅ 已人工验收（2026-10-13）
-Phase 4：进行中（起步）
+Phase 4：全部完成 + 88 测试全绿 + 真机验收报告（PHASE4_ACCEPTANCE.md）—— 待人工验收
