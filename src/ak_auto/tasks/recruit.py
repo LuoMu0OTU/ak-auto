@@ -4,6 +4,7 @@ from __future__ import annotations
 from maa.custom_action import CustomAction
 from maa.resource import Resource
 
+from ..config import AppConfig
 from ..data import recruitment
 
 
@@ -20,7 +21,11 @@ def _box_xywh(box) -> tuple[int, int, int, int]:
 
 
 class RecruitSelectTags(CustomAction):
-    """读取公招界面的 5 个标签，匹配保底组合并点击对应标签。"""
+    """读取公招界面的 5 个标签，匹配保底/优先组合并点击对应标签。"""
+
+    def __init__(self, cfg: AppConfig) -> None:
+        super().__init__()
+        self.cfg = cfg
 
     def run(self, context, argv) -> bool:
         detail = argv.reco_detail
@@ -36,7 +41,7 @@ class RecruitSelectTags(CustomAction):
             return True
 
         names = [t for t, _ in tags]
-        combo = recruitment.best_selection(names)
+        combo = recruitment.best_selection(names, self.cfg.recruit.tag_priority)
         print(f"[recruit] 识别标签={names}", flush=True)
         print(f"[recruit] 选中标签={combo}", flush=True)
         if not combo:
@@ -52,5 +57,5 @@ class RecruitSelectTags(CustomAction):
         return True
 
 
-def register(resource: Resource) -> None:
-    resource.register_custom_action("RecruitSelectTags", RecruitSelectTags())
+def register(resource: Resource, cfg: AppConfig) -> None:
+    resource.register_custom_action("RecruitSelectTags", RecruitSelectTags(cfg))

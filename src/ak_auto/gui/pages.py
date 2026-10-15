@@ -126,12 +126,15 @@ class SettingsPage(QWidget):
 
 
 class RunLogPage(QWidget):
-    """历史运行记录：读 logs/run-*.json（新→旧）。"""
+    """历史运行记录：读 logs/run-*.json（新→旧）+ 顶部聚合统计。"""
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         title = QLabel("运行记录")
         title.setObjectName("title")
+
+        self.stats_label = QLabel("")
+        self.stats_label.setObjectName("muted")
 
         self.list = QListWidget()
         self.detail = QPlainTextEdit()
@@ -140,11 +143,28 @@ class RunLogPage(QWidget):
 
         lay = QVBoxLayout(self)
         lay.addWidget(title)
+        lay.addWidget(self.stats_label)
         lay.addWidget(self.list, 2)
         lay.addWidget(self.detail, 3)
         self.refresh()
 
     def refresh(self) -> None:
+        from ..application.stats import run_stats
+
+        st = run_stats()
+        if st["runs"]:
+            parts = [
+                f"最近 {st['runs']} 次运行",
+                f"成功率 {int(st['all_ok_rate'] * 100)}%",
+                f"累计耗时 {st['total_ms'] / 1000:.0f}s",
+            ]
+            if st["tasks"]:
+                worst = max(st["tasks"].items(), key=lambda kv: kv[1]["runs"] - kv[1]["ok"])
+                parts.append(f"最常失败：{worst[0]}（{worst[1]['ok']}/{worst[1]['runs']} 成功）")
+            self.stats_label.setText(" · ".join(parts))
+        else:
+            self.stats_label.setText("还没有运行记录")
+
         self.list.clear()
         self.detail.clear()
         files = sorted(

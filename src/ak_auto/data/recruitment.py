@@ -43,22 +43,37 @@ def best_tag_combination(available_tags: list[str], min_rarity: int = 4) -> tupl
     return best_combo, best_ops
 
 
-def best_selection(available_tags: list[str]) -> list[str]:
+def best_selection(available_tags: list[str], tag_priority: list[str] | None = None) -> list[str]:
     """返回最佳标签选择。
 
-    优先级：保底 4★ 组合 > 保底 3★ 组合 > 单个能出最高稀有度的标签。
+    Phase 5 起支持 tag_priority：可用标签命中优先级列表时，选**优先级最高**的那个标签单独选
+    （如「高级资深干员」单独选即保底 6★，多选反而可能破坏保底）。
+    否则：保底 4★ 组合 > 保底 3★ 组合 > 单个能出最高稀有度的标签。
     数据驱动，等价于公招「选标签表」的保底逻辑。
     """
-    combo, _ops = best_tag_combination(available_tags, 4)
+    avail = [t.strip() for t in available_tags if t.strip()]
+    if tag_priority:
+        wants = [w.strip() for w in tag_priority if w and w.strip()]
+        # 先精确匹配（优先级顺序），避免「资深干员」⊂「高级资深干员」的误匹配
+        for want in wants:
+            for tag in avail:
+                if tag == want:
+                    return [tag]
+        # 再退让：OCR 结果可能带杂字，want 包含于 tag 即命中
+        for want in wants:
+            for tag in avail:
+                if want in tag:
+                    return [tag]
+    combo, _ops = best_tag_combination(avail, 4)
     if combo:
         return combo
-    combo, _ops = best_tag_combination(available_tags, 3)
+    combo, _ops = best_tag_combination(avail, 3)
     if combo:
         return combo
     # 无保底：选单个能出最高稀有度的标签（通常是职业标签）
     best_tag = ""
     best_rarity = 0
-    for tag in available_tags:
+    for tag in avail:
         ops = match_operators([tag])
         if not ops:
             continue

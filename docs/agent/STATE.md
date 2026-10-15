@@ -34,6 +34,14 @@ HEAD：54ddaeb（Phase 4 完成提交；本轮提交号见 git log 最新一条�
   - fight.json：Fight@FormationStart 点击坐标校正（真机 OCR 证据：编队页「开始行动」实际在 (1103,546)，旧坐标 (1088,507) 偏上 39px 导致点空）+ 等待超时 300s→600s。
   - 真机复现（旧路径）：理智 240 ÷ 36 → 最多 6 次；次数选择器弹出 + 白色行检测/点击正常；StartAction 在弹窗的「开始行动」(y644) 正确命中。
   - **未验证/未完成（如实记录）**：① 完整战斗（开始→「行动结束」→结算）未真机验证——探索期间误点把游戏内连战次数设成未知值，需在游戏里手动重置为 ×1 后才能安全验证；② 按 fight.stage 的选关导航未实现（阶段选择器逆向复杂，保留「未完成」）；③ 列表精确选次（times>1 时点目标行）未实现，现仍点最上方白色行。探索期间还误入过源石购买页（已安全退回），后续真机操作需更谨慎。
+- Phase 5 第 2 项 —— 公招策略（tag_priority 消费）✅：
+  - data/recruitment.py：best_selection 支持 tag_priority——命中时选优先级最高的标签单独选（先全量精确匹配再包含匹配，避免「资深干员」⊂「高级资深干员」误匹配）；未命中回退原保底逻辑。
+  - tasks/recruit.py：RecruitSelectTags 改用任务器传入的配置（同 Fight 的配置传递修复）；runtime.py 同步。
+  - 测试：tests/test_recruit_strategy.py 5 例（命中/顺序/回退/保底/空优先级），全套 102 例 exit=0。
+- Phase 5 第 4 项 —— 运行统计 ✅：
+  - 新增 application/stats.py：run_stats 聚合 logs/run-*.json（运行数/成功率/累计耗时/每任务 runs-ok-avg_ms，可限份数）。
+  - 运行记录页顶部加聚合统计行（含「最常失败任务」）。
+  - 测试：tests/test_stats.py 3 例；真机 logs 实测输出正常。
 - Phase 4 第 2 项 —— GUI 模式切换 + 高级设置页：
   - 侧边栏底部「模式：简单/高级」切换：仅切 ui.mode 与可见项，**不重置任何参数**（已测：fight.times 切换前后不变）；高级设置导航项仅高级模式可见。
   - 新增 AdvancedPage（pages.py）：任务排序（上移/下移，写 runtime.task_order）、刷图高级（理智下限[计划中标注]/连续作战）、公招高级（标签优先级[计划中标注]/次数/时长/保底/加急）、运行参数（重试/失败截图），范围验证 + 恢复默认 + 风险提示。

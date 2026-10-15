@@ -45,6 +45,6 @@ def _register_custom(res: Resource, cfg: AppConfig) -> None:
     """注册各任务的自定义动作/识别。"""
     from .tasks import fight, mall, recruit
 
-    recruit.register(res)
+    recruit.register(res, cfg)
     mall.register(res)
     fight.register(res, cfg)
