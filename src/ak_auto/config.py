@@ -57,6 +57,7 @@ class FightConfig(BaseModel):
     medicine: int = 0       # 用药数量
     stone: int = 0          # 碎源石数量（默认关闭）
     series: bool = True     # 连续作战
+    min_sanity: int = 0     # 理智策略：低于该值停止刷图（0=不限）—— 计划中：战斗任务 Phase 5 消费
 
 
 class InfrastConfig(BaseModel):
@@ -70,6 +71,7 @@ class RecruitConfig(BaseModel):
     ensure_4star: bool = True
     time_hours: int = 9
     expedite: bool = False
+    tag_priority: list[str] = Field(default_factory=list)  # 公招标签优先策略 —— 计划中：Phase 5 消费
 
 
 class MallConfig(BaseModel):
@@ -95,7 +97,35 @@ class RuntimeConfig(BaseModel):
     screenshot_on_error: bool = True
 
 
-CONFIG_SCHEMA_VERSION = 1  # 当前配置 Schema 版本（ConfigurationService 负责迁移）
+class UiConfig(BaseModel):
+    """界面偏好（简单/高级模式切换不得重置其它参数）。"""
+
+    mode: str = "simple"   # simple | advanced
+    theme: str = "dark"    # dark | light（浅色主题后续轮次实现）
+
+    @field_validator("mode")
+    @classmethod
+    def _mode(cls, v: str) -> str:
+        if v not in ("simple", "advanced"):
+            raise ValueError(f"ui.mode 只能是 simple/advanced，得到 {v!r}")
+        return v
+
+    @field_validator("theme")
+    @classmethod
+    def _theme(cls, v: str) -> str:
+        if v not in ("dark", "light"):
+            raise ValueError(f"ui.theme 只能是 dark/light，得到 {v!r}")
+        return v
+
+
+class PresetConfig(BaseModel):
+    """自定义任务预设（与内置推荐预设区分：内置预设不落配置）。"""
+
+    name: str = ""
+    task_ids: list[str] = Field(default_factory=list)
+
+
+CONFIG_SCHEMA_VERSION = 2  # 当前配置 Schema 版本（ConfigurationService 负责迁移）
 
 
 class AppConfig(BaseModel):
@@ -108,6 +138,8 @@ class AppConfig(BaseModel):
     mall: MallConfig = Field(default_factory=MallConfig)
     award: AwardConfig = Field(default_factory=AwardConfig)
     runtime: RuntimeConfig = Field(default_factory=RuntimeConfig)
+    ui: UiConfig = Field(default_factory=UiConfig)
+    custom_presets: list[PresetConfig] = Field(default_factory=list)
 
     @classmethod
     def load(cls, path: str | Path | None = None) -> "AppConfig":

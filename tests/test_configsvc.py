@@ -84,3 +84,42 @@ def test_partial_config_still_uses_defaults(tmp_path: Path) -> None:
     cfg = ConfigurationService(p).load()
     assert cfg.fight.stage == "1-7"
     assert cfg.recruit.max_times == 4  # 未覆盖字段仍走默认
+
+
+def test_v1_file_migrates_to_v2(tmp_path: Path) -> None:
+    p = tmp_path / "c.json"
+    p.write_text(
+        json.dumps({"schema_version": 1, "fight": {"times": 5}, "runtime": {"retry_per_task": 1}}),
+        encoding="utf-8",
+    )
+    cfg = ConfigurationService(p).load()
+    assert cfg.schema_version == CONFIG_SCHEMA_VERSION == 2
+    assert cfg.fight.times == 5  # 旧字段保留
+    assert cfg.ui.mode == "simple" and cfg.ui.theme == "dark"  # v2 新字段有默认值
+    assert cfg.custom_presets == []
+    assert cfg.fight.min_sanity == 0
+
+
+def test_ui_mode_validation(tmp_path: Path) -> None:
+    p = tmp_path / "c.json"
+    p.write_text(json.dumps({"schema_version": 2, "ui": {"mode": "pro"}}), encoding="utf-8")
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError):
+        ConfigurationService(p).load()
+
+
+def test_custom_presets_roundtrip(tmp_path: Path) -> None:
+    from ak_auto.config import PresetConfig
+
+    svc = ConfigurationService(tmp_path / "c.json")
+    cfg = svc.load()
+    cfg.custom_presets = [
+        PresetConfig(name="收菜+公招", task_ids=["Infrast", "Recruit"]),
+        PresetConfig(name="深夜刷图", task_ids=["Fight"]),
+    ]
+    svc.save(cfg)
+    loaded = svc.load()
+    assert len(loaded.custom_presets) == 2
+    assert loaded.custom_presets[0].name == "收菜+公招"
+    assert loaded.custom_presets[0].task_ids == ["Infrast", "Recruit"]

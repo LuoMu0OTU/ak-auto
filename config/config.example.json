@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "device": {
     "kind": "win32",
     "window_match": { "class_name": "", "title_contains": "明日方舟", "process_name": "Arknights" },
@@ -17,7 +17,8 @@
     "times": 0,
     "medicine": 0,
     "stone": 0,
-    "series": true
+    "series": true,
+    "min_sanity": 0
   },
   "infrast": {
     "collect": true,
@@ -28,7 +29,8 @@
     "max_times": 4,
     "ensure_4star": true,
     "time_hours": 9,
-    "expedite": false
+    "expedite": false,
+    "tag_priority": []
   },
   "mall": {
     "buy_first": ["招聘许可", "寻访凭证"],
@@ -44,5 +46,10 @@
     "task_order": ["StartUp", "AwardVisit", "Infrast", "Mall", "Recruit", "Fight", "Award", "AwardMail", "AwardSignIn"],
     "retry_per_task": 2,
     "screenshot_on_error": true
-  }
+  },
+  "ui": {
+    "mode": "simple",
+    "theme": "dark"
+  },
+  "custom_presets": []
 }

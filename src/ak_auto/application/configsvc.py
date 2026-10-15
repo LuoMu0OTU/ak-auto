@@ -19,7 +19,13 @@ from typing import Any, Callable, Optional
 from ..config import CONFIG_SCHEMA_VERSION, AppConfig, PROJECT_ROOT
 
 # 版本号 → 迁移函数（dict -> dict，把该版本升级到下一版）
-MIGRATIONS: dict[int, Callable[[dict], dict]] = {}
+def _migrate_1_to_2(data: dict) -> dict:
+    """v2 新增 ui/custom_presets/fight.min_sanity/recruit.tag_priority，均有默认值，
+    无字段搬移；这里只确保旧文件走到新版本号。"""
+    return data
+
+
+MIGRATIONS: dict[int, Callable[[dict], dict]] = {1: _migrate_1_to_2}
 
 
 class ConfigurationService:

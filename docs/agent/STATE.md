@@ -28,6 +28,11 @@ HEAD：203d4df（Phase 3 完成提交）
 - Phase 0：完整审计 + 测试基线 + 架构设计 + 路线图，已人工验收。
 - Phase 1：八项全部完成并已人工验收。细节见 CHANGELOG.md 与 git 历史。
 - 修复（用户报告：双击启动脚本崩溃）：launch_game 捕获启动异常（游戏清单 requireAdministrator，普通权限报 740）+ 三个启动器自动提权 + 新增「启动界面.bat」。测试 tests/test_device_launch.py 4 例。
+- Phase 4 第 1 项 —— 配置 Schema v2：
+  - config.py：CONFIG_SCHEMA_VERSION=2；新增 UiConfig（mode simple/advanced、theme dark/light，校验器）、PresetConfig（自定义预设）、fight.min_sanity（理智策略，计划中）、recruit.tag_priority（公招策略，计划中）、AppConfig.ui 与 AppConfig.custom_presets。
+  - configsvc.py：注册 MIGRATIONS[1]（v1→v2 无字段搬移，仅刷新版本）。
+  - config.example.json：升级到 v2 并附新字段。
+  - 测试：迁移/校验/预设往返 4 例；本地真实 config v1→v2 无损加载验证；全套 80 例 exit=0。
 - Phase 3 第 1 项 —— GUI 首页状态区：
   - worker.py：新增 task_state(task_id, 状态值) 与 seq_progress(已完成, 总数) 信号（由事件总线驱动，跨线程安全）。
   - 首页：运行状态标签（当前任务 — 状态机状态）+ 序列进度条；开始→准备中，结束→「已结束（k/n 成功）」。
