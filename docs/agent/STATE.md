@@ -8,11 +8,11 @@ Agent 可恢复工作状态
 
 更新日期：2026-10-13
 
-当前阶段：Phase 1 核心解耦（进行中，任务 6/8 完成）
+当前阶段：Phase 1 核心解耦（进行中，任务 7/8 完成）
 
 当前分支：main
 
-HEAD：f5a278c（本轮任务 6 提交前基线；任务 6 提交号见 git log 最新一条）
+HEAD：d8cd37f（本轮任务 7 提交前基线；任务 7 提交号见 git log 最新一条）
 
 工作区状态：干净（原未提交的 infrast.json 已按负责人授权提交并推送）
 
@@ -52,28 +52,32 @@ HEAD：f5a278c（本轮任务 6 提交前基线；任务 6 提交号见 git log 
   - 新增 src/ak_auto/infrastructure/：MaaFrameworkAdapter（MaaFw 装配唯一入口 + task_entries）、GameWindowAdapter（acquire/release 生命周期 + 单窗口单控制器互斥 + 还原兜底，WindowNotFound）、AssetManager（status/ready/ensure 资源检查与拉取）。
   - __main__.py：doctor 的资源检查改走 AssetManager；run/daily 改用 GameWindowAdapter(acquire/release) + MaaFrameworkAdapter(build_tasker)，行为与之前一致（委托现有 device/runtime）。
   - 测试：tests/test_adapters.py 7 例（资源状态/就绪短路/拉取调用/节点列表/单控制者复用/无窗口异常）。
+- Phase 1 任务 7 —— 新核心补测试（共享 Fake + 录制截图回归）：
+  - 新增 tests/fakes.py：共享假对象（FakeNode/FakeStatus/FakeDetail/FakeJob/BlockingJob/FakeTasker/BlockingTasker），test_events 与 test_execution 改为引用共享版（消除重复）。
+  - 录制截图回归：tests/fixtures/selector_rows.png（真机录下的次数列表裁剪，90KB 入库）；新增 tests/test_bright_rows.py 3 例（合成白色条带/灰色忽略/录制图检出行）。
+  - 说明：MaaFw 无「任意图片跑识别」的公开 API（识别必须经 Tasker+控制器），故回归针对 Python 层图像逻辑（bright_rows）；完整识别回归待 Phase 5 截图回归机制。
 
 
 进行中 / 待办
 
-Phase 1 剩余两项（按 docs/ROADMAP.md 拆解顺序）：
-7. 为新核心补单元测试（Fake 控制器 + 录制截图）；
-8. CLI 兼容验收（run/daily/doctor/probe/restore 与 Phase 0 行为一致，真机对照）。
+Phase 1 剩余一项：
+8. CLI 兼容验收（run/daily/doctor/probe/restore 与 Phase 0 行为一致）+ ADR-0002 的真机验证（post_stop 对真实任务的中断能力、取消后画面状态）。此任务需要真实游戏，属人工配合项。
 
 
 修改文件
 
-- 新增 src/ak_auto/domain/*（taskdef/state/events）、src/ak_auto/application/*（execution/configsvc）、src/ak_auto/infrastructure/*（maa_adapter/window_adapter/asset_manager）、tests/test_taskdef.py、test_state.py、test_events.py、test_execution.py、test_configsvc.py、test_adapters.py、docs/architecture/adr/0001、0002
-- 修改 src/ak_auto/__main__.py（目录解析 + tasks 命令 + 事件订阅 + 控制器/Ctrl+C + 配置服务 + 适配器）、scheduler.py（ExecutionResult + 事件 + 取消）、config.py（schema_version）、report.py（run_id/error）、config/config.example.json（schema_version）
+- 新增 src/ak_auto/domain/*（taskdef/state/events）、src/ak_auto/application/*（execution/configsvc）、src/ak_auto/infrastructure/*（maa_adapter/window_adapter/asset_manager）、tests/fakes.py、tests/fixtures/selector_rows.png、tests/test_taskdef.py、test_state.py、test_events.py、test_execution.py、test_configsvc.py、test_adapters.py、test_bright_rows.py、docs/architecture/adr/0001、0002
+- 修改 src/ak_auto/__main__.py（目录解析 + tasks 命令 + 事件订阅 + 控制器/Ctrl+C + 配置服务 + 适配器）、scheduler.py（ExecutionResult + 事件 + 取消）、config.py（schema_version）、report.py（run_id/error）、config/config.example.json（schema_version）、tests/test_events.py、test_execution.py（改用共享 fakes）
 - 未改动 device/runtime/pipeline（内部逻辑零重写，仅被适配器委托）
 
 
 测试与验证
 
 命令	结果	环境/备注
-python -m pytest -q	56 passed（15 旧 + 41 新）	Python 3.12.10 / pytest 9.1.1
-python -m ak_auto doctor	资源三项（MANIFEST/OCR/模板图）经 AssetManager 检查 OK	游戏未运行时窗口项 FAIL 属预期
+python -m pytest -q	59 passed（15 旧 + 44 新）	Python 3.12.10 / pytest 9.1.1
+python -m ak_auto doctor	资源三项经 AssetManager 检查 OK	游戏未运行时窗口项 FAIL 属预期
 python -m ak_auto tasks	正常列出 10 个任务（CJK 对齐）	—
+录制截图回归	bright_rows 在真机录制图上检出 8 个白色数字行	fixture 90KB 入库
 本地真实 config 经服务加载	schema_version 0→1 无损兼容，warning=None	—
 真机验证	未做	post_stop 对真实任务的中断能力列入任务 8 真机对照（ADR-0002）
 
@@ -100,11 +104,11 @@ python -m ak_auto tasks	正常列出 10 个任务（CJK 对齐）	—
 
 1. 重新读取 AGENTS.md、SESSION_START.md、本文件与 docs/ROADMAP.md。
 2. git status / git log 确认本轮提交与工作区状态。
-3. 继续 Phase 1 任务 7：为新核心补单元测试（Fake 控制器 / 录制截图回归），先输出计划再动手。
+3. 继续 Phase 1 任务 8（最后一项，需真实游戏）：CLI 兼容验收（run/daily/doctor/probe/restore 与 Phase 0 行为一致）+ post_stop 真机验证。先输出计划，真机项需项目负责人配合。
 
 
 阶段验收状态
 
 
 Phase 0：✅ 已人工验收（2026-10-13）
-Phase 1：进行中（6/8），按任务逐项自验 + 全部完成后人工验收
+Phase 1：进行中（7/8），任务 8 完成后整体提交人工验收

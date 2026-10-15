@@ -15,72 +15,7 @@ from ak_auto.application import ExecutionController  # noqa: E402
 from ak_auto.domain import EventBus, EventType, ExecutionState  # noqa: E402
 from ak_auto.scheduler import run_sequence  # noqa: E402
 
-
-class _Node:
-    def __init__(self, name: str) -> None:
-        self.name = name
-
-
-class _Status:
-    def __init__(self, ok: bool) -> None:
-        self.succeeded = ok
-        self.failed = not ok
-        self.running = False
-        self.pending = False
-
-
-class _Detail:
-    def __init__(self, ok: bool, nodes: list[str]) -> None:
-        self.status = _Status(ok)
-        self.nodes = [_Node(n) for n in nodes]
-
-
-class _InstantJob:
-    def wait(self) -> None:
-        return None
-
-    def get(self):
-        return None
-
-
-class BlockingJob:
-    """任务一直挂到 release 被置位（模拟运行中的 MaaFw 任务）。"""
-
-    def __init__(self, release: threading.Event, ok: bool = True, nodes: list[str] | None = None) -> None:
-        self._release = release
-        self._ok = ok
-        self._nodes = nodes or ["Fake@Done"]
-
-    @property
-    def done(self) -> bool:
-        return self._release.is_set()
-
-    def wait(self) -> None:
-        self._release.wait()
-
-    def get(self):
-        return _Detail(self._ok, self._nodes)
-
-
-class BlockingTasker:
-    """可控假 Tasker：post_stop 模拟 MaaFw 停止并释放当前任务。"""
-
-    class resource:  # noqa: D106 —— run_sequence 需要 node_list
-        node_list = ["Fake", "Fake@Done", "Recruit", "Fight"]
-
-    def __init__(self) -> None:
-        self.release = threading.Event()
-        self.stop_called = threading.Event()
-        self.posted: list[str] = []
-
-    def post_task(self, entry: str) -> BlockingJob:
-        self.posted.append(entry)
-        return BlockingJob(self.release)
-
-    def post_stop(self) -> _InstantJob:
-        self.stop_called.set()
-        self.release.set()  # 模拟 MaaFw：stop 之后 job 结束
-        return _InstantJob()
+from fakes import BlockingTasker  # noqa: E402
 
 
 class RaisingTasker(BlockingTasker):

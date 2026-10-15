@@ -12,53 +12,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from ak_auto.domain import EventBus, EventType, ExecutionState, TaskEvent  # noqa: E402
 from ak_auto.scheduler import run_task, run_sequence  # noqa: E402
 
-
-# ---- 假 Tasker（不依赖真实 MaaFw/游戏）----
-class _FakeNode:
-    def __init__(self, name: str) -> None:
-        self.name = name
-
-
-class _FakeStatus:
-    def __init__(self, ok: bool) -> None:
-        self.succeeded = ok
-        self.failed = not ok
-        self.running = False
-        self.pending = False
-
-
-class _FakeDetail:
-    def __init__(self, ok: bool, nodes: list[str]) -> None:
-        self.status = _FakeStatus(ok)
-        self.nodes = [_FakeNode(n) for n in nodes]
-
-
-class _FakeJob:
-    def __init__(self, ok: bool, nodes: list[str]) -> None:
-        self._detail = _FakeDetail(ok, nodes)
-
-    def wait(self) -> None:
-        return None
-
-    def get(self):
-        return self._detail
-
-
-class _FakeResource:
-    node_list = ["Fake", "Fake@Done", "Recruit"]
-
-
-class FakeTasker:
-    resource = _FakeResource()
-
-    def __init__(self, ok: bool = True, nodes: list[str] | None = None) -> None:
-        self.ok = ok
-        self.nodes = nodes or ["Fake@Done"]
-        self.posted: list[str] = []
-
-    def post_task(self, entry: str) -> _FakeJob:
-        self.posted.append(entry)
-        return _FakeJob(self.ok, self.nodes)
+from fakes import FakeTasker  # noqa: E402
 
 
 # ---- 事件总线单元测试 ----
