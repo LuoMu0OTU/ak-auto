@@ -1,10 +1,11 @@
-"""设置页与运行记录页（Phase 2 第 3 轮）。"""
+"""设置页 / 高级设置页 / 运行记录页（Phase 2/4）。"""
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
 from PySide6.QtWidgets import (
+    QCheckBox,
     QFormLayout,
     QHBoxLayout,
     QLabel,
@@ -160,3 +161,155 @@ class RunLogPage(QWidget):
                          f"{len(t.get('nodes', []))} nodes)" + (f"  [{t.get('error')}]" if t.get("error") else ""))
         lines += ["-" * 56, f"共 {len(data.get('tasks', []))} 项，总耗时 {data.get('total_ms', 0) / 1000:.1f}s"]
         self.detail.setPlainText("\n".join(lines))
+
+
+class AdvancedPage(QWidget):
+    """高级设置（Phase 4）：任务排序 + 刷图/公招高级参数 + 运行参数。
+
+    范围验证（SpinBox 边界）、推荐值、恢复默认、风险与「计划中」标注；
+    全部经 ConfigurationService 原子保存，不绕过安全策略。
+    """
+
+    def __init__(self, cfg: AppConfig, svc: ConfigurationService, parent=None) -> None:
+        super().__init__(parent)
+        self.cfg = cfg
+        self.svc = svc
+
+        title = QLabel("高级设置")
+        title.setObjectName("title")
+        hint = QLabel("这些参数影响实际执行；不确定的项保持默认即可。带「计划中」标注的参数已提供配置，"
+                      "将在后续版本生效。")
+        hint.setObjectName("muted")
+
+        # ---- 任务排序 ----
+        order_label = QLabel("任务顺序（每日常规按此顺序执行）")
+        self.order_list = QListWidget()
+        for t in cfg.runtime.task_order:
+            self.order_list.addItem(t)
+        up_btn = QPushButton("上移")
+        up_btn.clicked.connect(lambda: self._move(-1))
+        down_btn = QPushButton("下移")
+        down_btn.clicked.connect(lambda: self._move(1))
+        order_btns = QVBoxLayout()
+        order_btns.addWidget(up_btn)
+        order_btns.addWidget(down_btn)
+        order_btns.addStretch(1)
+        order_row = QHBoxLayout()
+        order_row.addWidget(self.order_list, 1)
+        order_row.addLayout(order_btns)
+
+        # ---- 刷图高级 ----
+        self.min_sanity = QSpinBox()
+        self.min_sanity.setRange(0, 999)
+        self.min_sanity.setValue(cfg.fight.min_sanity)
+        self.min_sanity.setToolTip("理智低于该值时停止刷图；0 = 不限")
+        self.series = QCheckBox("连续作战")
+        self.series.setChecked(cfg.fight.series)
+
+        fight_form = QFormLayout()
+        fight_form.addRow("理智下限（0=不限）", self.min_sanity)
+        fight_form.addRow("", self.series)
+        fight_form.addRow(QLabel("「理智下限」计划中：战斗任务将在后续版本消费该配置。"), QLabel(""))
+
+        # ---- 公招高级 ----
+        self.tag_priority = QLineEdit(", ".join(cfg.recruit.tag_priority))
+        self.tag_priority.setPlaceholderText("如：资深干员, 高级资深干员")
+        self.max_times = QSpinBox()
+        self.max_times.setRange(0, 10)
+        self.max_times.setValue(cfg.recruit.max_times)
+        self.time_hours = QSpinBox()
+        self.time_hours.setRange(1, 9)
+        self.time_hours.setValue(cfg.recruit.time_hours)
+        self.ensure_4star = QCheckBox("保底四星（3 次无四星标签时改选保底组合）")
+        self.ensure_4star.setChecked(cfg.recruit.ensure_4star)
+        self.expedite = QCheckBox("使用加急许可（消耗资源）")
+        self.expedite.setChecked(cfg.recruit.expedite)
+
+        recruit_form = QFormLayout()
+        recruit_form.addRow("标签优先级", self.tag_priority)
+        recruit_form.addRow("每日次数", self.max_times)
+        recruit_form.addRow("招募时长（小时）", self.time_hours)
+        recruit_form.addRow("", self.ensure_4star)
+        recruit_form.addRow("", self.expedite)
+        recruit_form.addRow(QLabel("「标签优先级」计划中：公招任务将在后续版本消费该配置。"), QLabel(""))
+
+        # ---- 运行参数 ----
+        self.retry = QSpinBox()
+        self.retry.setRange(0, 10)
+        self.retry.setValue(cfg.runtime.retry_per_task)
+        self.shot_on_error = QCheckBox("任务失败时保存截图（logs/debug）")
+        self.shot_on_error.setChecked(cfg.runtime.screenshot_on_error)
+
+        runtime_form = QFormLayout()
+        runtime_form.addRow("失败重试次数", self.retry)
+        runtime_form.addRow("", self.shot_on_error)
+
+        # ---- 保存 ----
+        self.status = QLabel("")
+        self.save_btn = QPushButton("保存")
+        self.save_btn.setObjectName("primary")
+        self.save_btn.clicked.connect(self._save)
+        self.default_btn = QPushButton("恢复默认")
+        self.default_btn.clicked.connect(self._reset)
+
+        btn_row = QHBoxLayout()
+        btn_row.addWidget(self.save_btn)
+        btn_row.addWidget(self.default_btn)
+        btn_row.addStretch(1)
+
+        lay = QVBoxLayout(self)
+        lay.addWidget(title)
+        lay.addWidget(hint)
+        lay.addWidget(order_label)
+        lay.addLayout(order_row)
+        lay.addWidget(QLabel("刷图高级"))
+        lay.addLayout(fight_form)
+        lay.addWidget(QLabel("公招高级"))
+        lay.addLayout(recruit_form)
+        lay.addWidget(QLabel("运行参数"))
+        lay.addLayout(runtime_form)
+        lay.addLayout(btn_row)
+        lay.addWidget(self.status)
+        lay.addStretch(1)
+
+    def _move(self, delta: int) -> None:
+        row = self.order_list.currentRow()
+        target = row + delta
+        if row < 0 or not (0 <= target < self.order_list.count()):
+            return
+        item = self.order_list.takeItem(row)
+        self.order_list.insertItem(target, item)
+        self.order_list.setCurrentRow(target)
+
+    def _order(self) -> list[str]:
+        return [self.order_list.item(i).text() for i in range(self.order_list.count())]
+
+    def _save(self) -> None:
+        self.cfg.runtime.task_order = self._order()
+        self.cfg.fight.min_sanity = self.min_sanity.value()
+        self.cfg.fight.series = self.series.isChecked()
+        self.cfg.recruit.tag_priority = [x.strip() for x in self.tag_priority.text().split(",") if x.strip()]
+        self.cfg.recruit.max_times = self.max_times.value()
+        self.cfg.recruit.time_hours = self.time_hours.value()
+        self.cfg.recruit.ensure_4star = self.ensure_4star.isChecked()
+        self.cfg.recruit.expedite = self.expedite.isChecked()
+        self.cfg.runtime.retry_per_task = self.retry.value()
+        self.cfg.runtime.screenshot_on_error = self.shot_on_error.isChecked()
+        self.svc.save(self.cfg)
+        self.status.setText("已保存 ✓（任务中心与下次运行生效）")
+
+    def _reset(self) -> None:
+        d = AppConfig()
+        self.order_list.clear()
+        for t in d.runtime.task_order:
+            self.order_list.addItem(t)
+        self.min_sanity.setValue(d.fight.min_sanity)
+        self.series.setChecked(d.fight.series)
+        self.tag_priority.setText(", ".join(d.recruit.tag_priority))
+        self.max_times.setValue(d.recruit.max_times)
+        self.time_hours.setValue(d.recruit.time_hours)
+        self.ensure_4star.setChecked(d.recruit.ensure_4star)
+        self.expedite.setChecked(d.recruit.expedite)
+        self.retry.setValue(d.runtime.retry_per_task)
+        self.shot_on_error.setChecked(d.runtime.screenshot_on_error)
+        self.status.setText("已恢复默认（点「保存」生效）")

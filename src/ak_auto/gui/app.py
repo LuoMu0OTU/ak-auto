@@ -27,7 +27,7 @@ def run_gui() -> int:
         if wiz.exec() != QDialog.DialogCode.Accepted:
             return 0
 
-    win = MainWindow(cfg)
+    win = MainWindow(cfg, svc)
     if svc.warning:
         win._log(f"[warn] {svc.warning}")  # noqa: SLF001 —— 启动期提示
     win.show()

@@ -38,8 +38,9 @@ def test_main_window_constructs(qapp) -> None:
 
     win = MainWindow(AppConfig())
     assert win.windowTitle() == "ak-auto — 明日方舟本地自动化助手"
-    assert win.nav.count() == len(NAV_ITEMS) == 4
-    assert win.pages.count() == 4
+    assert win.nav.count() == len(NAV_ITEMS) + 1 == 5  # 4 常规页 + 高级设置
+    assert win.pages.count() == 5
+    assert win.nav.item(4).isHidden()  # 简单模式下隐藏高级设置
     assert win.home.start_btn.isEnabled() is True
     assert win.home.stop_btn.isEnabled() is False  # 未运行时停止按钮禁用
     win.close()
@@ -56,7 +57,7 @@ def test_theme_applies(qapp) -> None:
 def test_task_page_lists_catalog(qapp) -> None:
     from ak_auto.gui.main_window import TaskPage
 
-    page = TaskPage()
+    page = TaskPage(AppConfig())
     assert len(page.checks) == 10  # 任务目录全量
 
 
@@ -67,12 +68,34 @@ def test_sequence_interleaves_return_home() -> None:
     assert _sequence(["Infrast"]) == ["ReturnToHome", "Infrast"]
 
 
-def test_task_page_preset_and_selection(qapp) -> None:
-    from ak_auto.gui.main_window import PRESETS, TaskPage
+def test_sequence_honors_custom_order() -> None:
+    from ak_auto.gui.main_window import _sequence
 
-    page = TaskPage()
-    page.apply_preset(PRESETS["快速收菜"])
+    # 自定义顺序：Recruit 在 Infrast 之前 → 序列按该顺序生成
+    order = ["StartUp", "Recruit", "Infrast", "Mall"]
+    entries = _sequence(["Infrast", "Recruit"], order)
+    assert entries == ["ReturnToHome", "Recruit", "ReturnToHome", "Infrast"]
+
+
+def test_task_page_preset_and_selection(qapp) -> None:
+    from ak_auto.gui.main_window import TaskPage
+
+    page = TaskPage(AppConfig())
+    page.apply_preset("快速收菜")
     assert page.selected_entries() == ["ReturnToHome", "Infrast"]
+
+
+def test_task_page_custom_preset(qapp) -> None:
+    from ak_auto.config import AppConfig, PresetConfig
+
+    from ak_auto.gui.main_window import TaskPage
+
+    cfg = AppConfig()
+    cfg.custom_presets = [PresetConfig(name="收菜+公招", task_ids=["Infrast", "Recruit"])]
+    page = TaskPage(cfg)
+    assert "收菜+公招" in page.preset_names()
+    page.apply_preset("收菜+公招")
+    assert page.selected_entries() == ["ReturnToHome", "Infrast", "ReturnToHome", "Recruit"]
 
 
 def test_worker_is_qthread() -> None:
@@ -157,3 +180,46 @@ def test_worker_has_state_signals() -> None:
 
     for name in ("task_state", "seq_progress", "log", "done", "failed"):
         assert hasattr(TaskWorker, name), f"缺信号 {name}"
+
+
+def test_mode_toggle_does_not_reset_params(qapp, tmp_path) -> None:
+    from ak_auto.application import ConfigurationService
+    from ak_auto.gui.main_window import MainWindow
+
+    svc = ConfigurationService(tmp_path / "c.json")
+    cfg = svc.load()
+    cfg.fight.times = 7
+    svc.save(cfg)
+
+    win = MainWindow(cfg, svc)
+    assert cfg.ui.mode == "simple"
+    assert win.nav.item(4).isHidden()
+
+    win._toggle_mode()
+    assert cfg.ui.mode == "advanced"
+    assert not win.nav.item(4).isHidden()
+    assert cfg.fight.times == 7  # 切换模式不重置任何参数
+
+    reloaded = svc.load()
+    assert reloaded.ui.mode == "advanced" and reloaded.fight.times == 7
+    win.close()
+
+
+def test_advanced_page_save(qapp, tmp_path) -> None:
+    from ak_auto.application import ConfigurationService
+    from ak_auto.gui.pages import AdvancedPage
+
+    svc = ConfigurationService(tmp_path / "c.json")
+    cfg = svc.load()
+    page = AdvancedPage(cfg, svc)
+
+    page.order_list.setCurrentRow(2)
+    page._move(-1)  # 把第 3 项上移一位
+    page.min_sanity.setValue(30)
+    page.tag_priority.setText("资深干员, 高级资深干员")
+    page._save()
+
+    loaded = svc.load()
+    assert loaded.fight.min_sanity == 30
+    assert loaded.recruit.tag_priority == ["资深干员", "高级资深干员"]
+    assert loaded.runtime.task_order == page._order()

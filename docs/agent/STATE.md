@@ -28,6 +28,11 @@ HEAD：203d4df（Phase 3 完成提交）
 - Phase 0：完整审计 + 测试基线 + 架构设计 + 路线图，已人工验收。
 - Phase 1：八项全部完成并已人工验收。细节见 CHANGELOG.md 与 git 历史。
 - 修复（用户报告：双击启动脚本崩溃）：launch_game 捕获启动异常（游戏清单 requireAdministrator，普通权限报 740）+ 三个启动器自动提权 + 新增「启动界面.bat」。测试 tests/test_device_launch.py 4 例。
+- Phase 4 第 2 项 —— GUI 模式切换 + 高级设置页：
+  - 侧边栏底部「模式：简单/高级」切换：仅切 ui.mode 与可见项，**不重置任何参数**（已测：fight.times 切换前后不变）；高级设置导航项仅高级模式可见。
+  - 新增 AdvancedPage（pages.py）：任务排序（上移/下移，写 runtime.task_order）、刷图高级（理智下限[计划中标注]/连续作战）、公招高级（标签优先级[计划中标注]/次数/时长/保底/加急）、运行参数（重试/失败截图），范围验证 + 恢复默认 + 风险提示。
+  - 任务中心：预设改为「每日常规 = 配置的 task_order + 内置推荐 + 自定义预设（按名应用）」；勾选序列按 task_order 排序生成（排序真正生效）。
+  - 真机验证：模式切换按钮/可见性正确；测试新增 4 例，全套 84 例 exit=0。
 - Phase 4 第 1 项 —— 配置 Schema v2：
   - config.py：CONFIG_SCHEMA_VERSION=2；新增 UiConfig（mode simple/advanced、theme dark/light，校验器）、PresetConfig（自定义预设）、fight.min_sanity（理智策略，计划中）、recruit.tag_priority（公招策略，计划中）、AppConfig.ui 与 AppConfig.custom_presets。
   - configsvc.py：注册 MIGRATIONS[1]（v1→v2 无字段搬移，仅刷新版本）。
