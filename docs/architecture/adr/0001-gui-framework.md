@@ -1,6 +1,6 @@
 # ADR-0001：GUI 框架选型评估（Phase 0 技术选型）
 
-> 状态：**提议（Phase 0 评估结论，待 Phase 2 前由项目负责人确认）**
+> 状态：**已采纳（2026-10-13，Phase 2 授权时由项目负责人确认）**
 > 日期：2026-10-13
 > 依据：AGENTS.md 第 2.9 条「优先评估 PySide6/Qt Widgets，核实 Python、MaaFramework 线程、Windows DPI、构建体积及 LGPL/其他许可要求后决策；替代方案须写 ADR」。
 

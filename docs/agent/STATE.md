@@ -8,113 +8,75 @@ Agent 可恢复工作状态
 
 更新日期：2026-10-13
 
-当前阶段：Phase 1 核心解耦（八项全部完成，待人工验收）
+当前阶段：Phase 2 GUI 基础（进行中，起步：PySide6 依赖 + 最小窗口原型）
 
 当前分支：main
 
-HEAD：aee4195（任务 7 提交；任务 8 提交号见 git log 最新一条）
+HEAD：297699b（Phase 1 完成提交；本轮提交号见 git log 最新一条）
 
-工作区状态：干净（原未提交的 infrast.json 已按负责人授权提交并推送）
+工作区状态：干净
 
-本轮获准任务：Phase 1（经人工授权，八项任务全部完成）；推送已授权。
+本轮获准任务：Phase 1 已人工验收（2026-10-13）；授权进入 Phase 2（GUI 基础），ADR-0001（PySide6）随之确认采纳；推送已授权。
 
 
 已完成
 
-- Phase 0 全部（审计/测试基线/架构/路线图），已人工验收（2026-10-13）。
-- 基建 infrast.json（制造/贸易停工节点）经负责人确认保留，已提交并推送。
-- Phase 1 任务 1 —— TaskDefinition 任务目录：
-  - 新增 src/ak_auto/domain/taskdef.py：TaskDefinition + ParamSpec 模型（id/名称/分类/描述/参数 Schema/默认推荐值/风险等级/前置条件/执行入口/超时/重试/错误说明）+ 10 个任务的目录 + resolve_task（按 ID/中文名/忽略大小写解析）。
-  - CLI 集成：run 经目录解析（支持中文名；未登记的名称按原始流水线节点名兼容执行）；daily 对 task_order 逐项校验并警告；新增 tasks 子命令列出目录。
-  - 测试：tests/test_taskdef.py 6 例（目录完整/唯一、必选任务、解析、Fight 安全默认、task_order 一致性、入口在流水线中存在）。
-- Phase 1 任务 2 —— ExecutionState 状态机 + ExecutionResult：
-  - 新增 src/ak_auto/domain/state.py：ExecutionState 七态枚举（PENDING/PREPARING/RUNNING/STOPPING/SUCCEEDED/FAILED/CANCELLED，Paused 暂不启用）+ 合法转移表 + StateMachine（终态无出边）+ ExecutionResult（run_id/task_id/state/起止时间/错误/nodes，保留 entry/ok/status/summary 兼容属性）+ new_run_id。
-  - scheduler.py：TaskResult 改为 ExecutionResult 别名；run_task 经状态机跟踪（PENDING→PREPARING→RUNNING→终态）产出 ExecutionResult；run_sequence 的 missing-node 改用错误码。
-  - report.py：报告 JSON 增加 run_id/error 字段；控制台 summary 格式与旧版一致（合成错误如 missing-node 优先展示）。
-  - 测试：tests/test_state.py 8 例（happy path/取消/停止/非法转移/兼容字段/错误展示/to_dict/别名）。
-- Phase 1 任务 3 —— 事件总线（最小）：
-  - 新增 src/ak_auto/domain/events.py：EventType 六事件（TaskStarted/TaskProgress/TaskCompleted/TaskFailed/TaskCancelled/ConnectionChanged）+ TaskEvent（run_id/task_id/时间戳/状态/诊断）+ EventBus（同步订阅/发布、订阅者异常隔离）。
-  - scheduler.py：run_task/run_sequence 增加 bus 参数；run_task 发 TaskStarted + TaskCompleted/TaskFailed；run_sequence 发 TaskProgress（重试提示）。
-  - __main__.py：run/daily 订阅总线并在控制台输出事件（▶开始/✔完成/✘失败；TaskProgress 由 on_progress 负责不重复打印）。
-  - 测试：tests/test_events.py 9 例（订阅/全订阅/异常隔离/调度器事件/序列进度/缺失节点），内含 FakeTasker（任务 7 Fake 控制器的种子）。
-- Phase 1 任务 4 —— ExecutionController 协作式取消：
-  - 评估结论：MaaFw `Tasker.post_stop()` 存在（v5.14.3），`Job.done` 可轮询 → 见 ADR-0002。
-  - scheduler.py 重构出 `_run_entry`（无取消事件时与旧阻塞 wait 等价；有则轮询 + STOPPING→post_stop→CANCELLED）；run_sequence 支持 cancel_event（剩余任务记 CANCELLED）。
-  - 新增 src/ak_auto/application/execution.py：ExecutionController（daemon 线程、cancel/wait、控制面终态规则、worker 异常也落 FAILED）。
-  - __main__.py：run/daily 改用控制器；**Ctrl+C 从杀进程升级为优雅停止**（cancel + 有限等待 + 窗口还原兜底）。
-  - ADR-0002（取消方案）+ 测试 tests/test_execution.py 6 例（正常完成/取消停止/取消事件/序列剩余取消/重复 start/异常终态）。
-- Phase 1 任务 5 —— ConfigurationService：
-  - config.py：新增 CONFIG_SCHEMA_VERSION=1 与 AppConfig.schema_version 字段；config.example.json 加 "schema_version": 1。
-  - 新增 src/ak_auto/application/configsvc.py：load（缺失/损坏/非对象 JSON → 备份 .corrupt.bak + 回退默认 + warning）、save（原子写 tmp+os.replace + 写前 .pre-write.bak）、MIGRATIONS 迁移钩子（按 schema_version 逐版升级）。
-  - __main__.py：run/daily/doctor/probe/restore 全部改经 _load_config()（ConfigurationService）。
-  - 测试：tests/test_configsvc.py 7 例（缺失默认/往返/备份/损坏恢复/非对象/迁移钩子/部分覆盖）。
-- Phase 1 任务 6 —— Adapters 收敛（最小包裹，不重写内部逻辑）：
-  - 新增 src/ak_auto/infrastructure/：MaaFrameworkAdapter（MaaFw 装配唯一入口 + task_entries）、GameWindowAdapter（acquire/release 生命周期 + 单窗口单控制器互斥 + 还原兜底，WindowNotFound）、AssetManager（status/ready/ensure 资源检查与拉取）。
-  - __main__.py：doctor 的资源检查改走 AssetManager；run/daily 改用 GameWindowAdapter(acquire/release) + MaaFrameworkAdapter(build_tasker)，行为与之前一致（委托现有 device/runtime）。
-  - 测试：tests/test_adapters.py 7 例（资源状态/就绪短路/拉取调用/节点列表/单控制者复用/无窗口异常）。
-- Phase 1 任务 7 —— 新核心补测试（共享 Fake + 录制截图回归）：
-  - 新增 tests/fakes.py：共享假对象（FakeNode/FakeStatus/FakeDetail/FakeJob/BlockingJob/FakeTasker/BlockingTasker），test_events 与 test_execution 改为引用共享版（消除重复）。
-  - 录制截图回归：tests/fixtures/selector_rows.png（真机录下的次数列表裁剪，90KB 入库）；新增 tests/test_bright_rows.py 3 例（合成白色条带/灰色忽略/录制图检出行）。
-  - 说明：MaaFw 无「任意图片跑识别」的公开 API（识别必须经 Tasker+控制器），故回归针对 Python 层图像逻辑（bright_rows）；完整识别回归待 Phase 5 截图回归机制。
-- Phase 1 任务 8 —— CLI 兼容验收 + 真机取消验证（本机真机完成）：
-  - doctor / probe --list / restore：正常（游戏未运行时提示符合预期）。
-  - run ReturnToHome / run StartUp：任务目录解析 → 自动启动 → 事件（▶/✔）→ 控制器执行 → OK（StartUp 26 节点冷启动到主界面）。
-  - daily（最小 task_order）：控制器路径 + 报告渲染/保存正常。
-  - **真机取消**：完整序列第 15 秒 cancel → 正在执行的 AwardVisit 被 post_stop 中断（4.2s 而非 ~40s）→ TASK_CANCELLED 事件 → 剩余任务全部 CANCELLED 未执行 → 终态 cancelled → 窗口已还原；取消后游戏在好友界面，ReturnToHome 一次回到主界面（可恢复，安全）。
-  - 已知项（非本次回归）：StartUp 从非主界面（如好友界面）启动会卡 CloseAnno 固定点击循环——daily 默认顺序依赖「开局在主界面」，中断后先 ReturnToHome 再 daily。
+- Phase 0：完整审计 + 测试基线 + 架构设计 + 路线图，已人工验收。
+- Phase 1：八项全部完成并已人工验收（TaskDefinition 目录 / 状态机与 ExecutionResult / 事件总线 / ExecutionController 取消 / ConfigurationService / 三个基础设施适配器 / 共享 Fake + 录制截图回归 / CLI 真机验收与 post_stop 真机验证）。59 个测试全绿。细节见 CHANGELOG.md 与 git 历史。
 
 
 进行中 / 待办
 
-- 等人工验收 Phase 1（验收点见下）。
-- 验收通过后：Phase 2 GUI 基础（先确认 ADR-0001 的 PySide6 选型，再做最小窗口原型）。
+Phase 2 GUI 基础（按 AGENTS.md 第 3/4 节 + ROADMAP）：
+1. PySide6 依赖（requirements + NOTICE 许可声明）—— 本轮做。
+2. 最小窗口原型：主窗口 + 深色主题 + 首页 + 一个真实任务按钮（StartUp）+ QThread 桥接（ExecutionController/事件/取消），验证 DPI/字体/线程三条风险 —— 本轮做。
+3. 页面扩展：任务中心（勾选 + 推荐预设）、运行记录、设置（ConfigurationService 读写）。
+4. 首次启动向导（环境检查/游戏路径/资源准备/配置验证/试运行）。
+5. `ak_auto gui` 命令入口 + 冒烟测试。
+（第 3–5 项分轮推进，每轮小步 + 可验证。）
 
 
 修改文件
 
-- 新增 src/ak_auto/domain/*（taskdef/state/events）、src/ak_auto/application/*（execution/configsvc）、src/ak_auto/infrastructure/*（maa_adapter/window_adapter/asset_manager）、tests/fakes.py、tests/fixtures/selector_rows.png、tests/test_taskdef.py、test_state.py、test_events.py、test_execution.py、test_configsvc.py、test_adapters.py、test_bright_rows.py、docs/architecture/adr/0001、0002
-- 修改 src/ak_auto/__main__.py（目录解析 + tasks 命令 + 事件订阅 + 控制器/Ctrl+C + 配置服务 + 适配器）、scheduler.py（ExecutionResult + 事件 + 取消）、config.py（schema_version）、report.py（run_id/error）、config/config.example.json（schema_version）、tests/test_events.py、test_execution.py（改用共享 fakes）
-- 未改动 device/runtime/pipeline（内部逻辑零重写，仅被适配器委托）
+- 本轮起：src/ak_auto/gui/（新增）、requirements.txt/pyproject.toml（加 PySide6）、NOTICE.md（LGPL 声明）、__main__.py（gui 命令）、tests/（GUI 冒烟测试）、docs/agent/STATE.md、CHANGELOG.md
 
 
 测试与验证
 
 命令	结果	环境/备注
-python -m pytest -q	59 passed（15 旧 + 44 新）	Python 3.12.10 / pytest 9.1.1
-python -m ak_auto tasks	正常列出 10 个任务（CJK 对齐）	—
-真机 run StartUp / ReturnToHome	经新架构（目录+适配器+控制器+事件）OK	本机真实游戏
-真机 daily（最小 order）	报告渲染/保存正常	本机真实游戏
-真机取消（mid-task）	post_stop 中断 AwardVisit → CANCELLED → 剩余跳过 → 窗口还原	本机真实游戏，ADR-0002 验证通过
-doctor / probe / restore	正常	本机
+python -m pytest -q	59 passed	Phase 1 基线
+（本轮 GUI 新增后补充）	—	—
 
 
 已知问题 / 风险 / 阻塞
 
-- 沿用 docs/architecture/AUDIT.md 第 9 节风险清单（固定坐标、取消/状态机未落地、配置无版本化等，均由 Phase 1 后续任务逐一解决）。
-- taskdef 的 params 仅是「描述性 Schema」，值仍存 config 分区；参数化 UI 属 Phase 4，不在 Phase 1 范围。
-- 推送已获授权：后续提交可随轮 push。
+- GUI 与真实游戏并发使用时会抢输入控制者（GameWindowAdapter 已做单控制器互斥，GUI 内串行任务）。
+- native_wheel（真实光标滚动）执行期间会抢用户鼠标，GUI 运行刷图任务时应提示用户勿动鼠标。
+- 高 DPI/中文字体需真机目检（本轮原型验证点）。
+- 沿用 Phase 0 审计风险清单其余项（Fight 选关、连战次数两缺陷、固定坐标脆弱等，属 Phase 5 范围）。
 
 
 待真机验证
 
-- 无新增（本轮未改运行代码）；Phase 1 全部完成后按任务 8 做一次真机对照。
+- GUI 窗口在 125%/150% DPI 下的布局与字体；
+- GUI 内启动/停止真实任务的完整链路（首轮原型即验证 StartUp 一次）。
 
 
 设计决策及 ADR
 
-- ADR-0001（提议）：GUI 框架选 PySide6 + Qt Widgets；Phase 2 开工前需人工确认。
-- TaskDefinition 模型落地：entry 留空默认等于 id；风险等级 low/medium/high；Fight 的 medicine/stone 默认 0（安全默认）。
+- ADR-0001：GUI 框架 PySide6 + Qt Widgets —— 随 Phase 2 授权确认采纳。
+- ADR-0002：协作式取消（post_stop + 轮询）—— 已真机验证。
 
 
 下一轮第一步
 
 1. 重新读取 AGENTS.md、SESSION_START.md、本文件与 docs/ROADMAP.md。
-2. git status / git log 确认本轮提交与工作区状态。
-3. 若 Phase 1 已人工验收：请项目负责人确认 ADR-0001（PySide6）后，按 ROADMAP 进入 Phase 2（GUI 基础，先最小窗口原型）。
+2. 继续 Phase 2：装 PySide6 → 最小原型 → gui 命令 → 冒烟测试；先输出本轮计划再动手。
 
 
 阶段验收状态
 
 
 Phase 0：✅ 已人工验收（2026-10-13）
-Phase 1：八项全部完成 + 测试全绿 + 真机验收通过 —— 待人工验收
+Phase 1：✅ 已人工验收（2026-10-13）
+Phase 2：进行中（起步）
