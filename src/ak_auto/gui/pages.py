@@ -67,6 +67,8 @@ class SettingsPage(QWidget):
         self.save_btn.clicked.connect(self._save)
         self.reset_btn = QPushButton("恢复默认")
         self.reset_btn.clicked.connect(self._reset)
+        self.wizard_btn = QPushButton("重新运行首次向导")
+        self.wizard_btn.clicked.connect(self._wizard)
 
         row = QHBoxLayout()
         row.addWidget(self.save_btn)
@@ -78,8 +80,14 @@ class SettingsPage(QWidget):
         lay.addLayout(form)
         lay.addWidget(risk)
         lay.addLayout(row)
+        lay.addWidget(self.wizard_btn)
         lay.addWidget(self.status)
         lay.addStretch(1)
+
+    def _wizard(self) -> None:
+        from .wizard import FirstRunWizard
+
+        FirstRunWizard(self.cfg, self.svc).exec()
 
     def _save(self) -> None:
         self.cfg.startup.game_path = self.game_path.text().strip()

@@ -8,15 +8,15 @@ Agent 可恢复工作状态
 
 更新日期：2026-10-13
 
-当前阶段：Phase 2 GUI 基础（进行中，起步：PySide6 依赖 + 最小窗口原型）
+当前阶段：Phase 2 GUI 基础（四项全部完成，待人工验收）
 
 当前分支：main
 
-HEAD：297699b（Phase 1 完成提交；本轮提交号见 git log 最新一条）
+HEAD：5ff9e48（第 3 轮提交；本轮提交号见 git log 最新一条）
 
 工作区状态：干净
 
-本轮获准任务：Phase 2（经人工授权）。已完成第 1–3 轮（依赖+原型；任务中心+真实执行；设置读写+运行记录）；后续轮次继续首页完善/向导/GUI 停止真机验证；推送已授权。
+本轮获准任务：Phase 2（经人工授权），四项全部完成待验收；推送已授权。
 
 
 已完成
@@ -36,15 +36,18 @@ HEAD：297699b（Phase 1 完成提交；本轮提交号见 git log 最新一条�
 - Phase 2 第 3 轮：
   - 新增 src/ak_auto/gui/pages.py：SettingsPage（游戏路径/关卡/次数/用药/碎石/重试 编辑 + 保存（ConfigurationService 原子写）+ 恢复默认 + 付费资源风险提示）、RunLogPage（读 logs/run-*.json 列表 + 详情渲染）。
   - worker.py：任务结束自动保存运行报告（logs/run-*.json），运行记录页随之刷新。
-  - 修复：Qt offscreen 与 MaaFw 同进程的解释器退出崩溃（0xC0000409）——模块级清理 fixture（deleteLater + processEvents），全套 67 例 exit=0。
+  - 修复：Qt offscreen 与 MaaFw 同进程的解释器退出崩溃（0xC0000409）——模块级清理 fixture（deleteLater + processEvents），全套 exit=0。
+- Phase 2 第 4 轮（收尾）：
+  - 新增 src/ak_auto/gui/wizard.py：FirstRunWizard（欢迎 → 环境检查 → 游戏路径 → 资源准备 → 完成保存），首次运行（无 config.json）自动弹出；设置页加「重新运行首次向导」。
+  - 首页加「上次结果」行（读最新 logs/run-*.json 摘要，运行结束后自动刷新）。
+  - **真机验证：GUI 内停止真实任务**——任务中心勾选 StartUp/AwardVisit/Infrast/Mall 执行中点击停止 → post_stop → 当前任务 CANCELLED → 剩余任务全部跳过 → 窗口还原、退出码 0。
+  - 测试：wizard 冒烟 1 例；全套 68 例 exit=0。
 
 
 进行中 / 待办
 
-Phase 2 后续轮次：
-- 首页完善：今日任务、最近结果（logs/ 读取展示）。
-- 首次启动向导（环境检查/游戏路径/资源准备/配置验证/试运行）。
-- GUI 停止真实任务的链路真机验证（TaskWorker.stop → post_stop）。
+- 等人工验收 Phase 2（验收点见下）。
+- 验收通过后：Phase 3 核心集成（全部稳定任务在 GUI 内逐项验证状态/停止/配置同步；当前任务中心已能跑全部任务，Phase 3 为逐项真机验收）。
 
 
 修改文件
@@ -55,11 +58,12 @@ Phase 2 后续轮次：
 测试与验证
 
 命令	结果	环境/备注
-python -m pytest -q	67 passed，exit=0（已修 Qt/MaaFw 退出崩溃）	Python 3.12.10 / pytest 9.1.1
+python -m pytest -q	68 passed，exit=0	Python 3.12.10 / pytest 9.1.1
 python -m ak_auto --help	含 gui 命令	—
 真机 GUI 启动	窗口 1024x680 深色主题渲染正常	本机真实桌面
 真机 GUI 内跑任务	「运行 StartUp」→ StartUp OK（3.6s），事件实时进日志窗	本机真实游戏
-GUI 内停止任务	未做	下一轮真机验证（TaskWorker.stop → post_stop）
+真机 GUI 内停止任务	停止 → post_stop → 当前任务 CANCELLED → 剩余跳过 → 窗口还原，退出码 0	本机真实游戏
+向导	offscreen 冒烟 5 页齐全；首次运行自动弹出（真机未目检，需人工看一眼）	—
 
 
 已知问题 / 风险 / 阻塞
@@ -85,7 +89,8 @@ GUI 内停止任务	未做	下一轮真机验证（TaskWorker.stop → post_stop
 下一轮第一步
 
 1. 重新读取 AGENTS.md、SESSION_START.md、本文件与 docs/ROADMAP.md。
-2. 继续 Phase 2：装 PySide6 → 最小原型 → gui 命令 → 冒烟测试；先输出本轮计划再动手。
+2. git status / git log 确认本轮提交与工作区状态。
+3. 若 Phase 2 已人工验收：进入 Phase 3 核心集成（逐项真机验收全部稳定任务在 GUI 内的状态/停止/配置同步）。
 
 
 阶段验收状态
@@ -93,4 +98,4 @@ GUI 内停止任务	未做	下一轮真机验证（TaskWorker.stop → post_stop
 
 Phase 0：✅ 已人工验收（2026-10-13）
 Phase 1：✅ 已人工验收（2026-10-13）
-Phase 2：进行中（起步）
+Phase 2：四项全部完成 + 测试全绿 + 真机跑/停验证通过 —— 待人工验收

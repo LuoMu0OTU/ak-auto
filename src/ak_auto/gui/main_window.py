@@ -57,6 +57,8 @@ class HomePage(QWidget):
         title.setObjectName("title")
         self.status_label = QLabel(self._status_text(cfg))
         self.status_label.setObjectName("muted")
+        self.last_label = QLabel(self._last_run_text())
+        self.last_label.setObjectName("muted")
 
         self.start_btn = QPushButton("运行 StartUp（快速启动）")
         self.start_btn.setObjectName("primary")
@@ -74,8 +76,34 @@ class HomePage(QWidget):
         lay = QVBoxLayout(self)
         lay.addWidget(title)
         lay.addWidget(self.status_label)
+        lay.addWidget(self.last_label)
         lay.addLayout(row)
         lay.addWidget(self.log_view, 1)
+
+    @staticmethod
+    def _last_run_text() -> str:
+        import json
+
+        from ..config import PROJECT_ROOT
+
+        files = sorted(
+            (PROJECT_ROOT / "logs").glob("run-*.json"),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
+        if not files:
+            return "上次结果：暂无运行记录"
+        try:
+            data = json.loads(files[0].read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return "上次结果：记录无法读取"
+        tasks = data.get("tasks", [])
+        ok_n = sum(1 for t in tasks if t.get("ok"))
+        total = data.get("total_ms", 0) / 1000
+        return f"上次结果（{data.get('started_at', '?')}）：{ok_n}/{len(tasks)} 成功，耗时 {total:.0f}s"
+
+    def refresh_last(self) -> None:
+        self.last_label.setText(self._last_run_text())
 
     @staticmethod
     def _status_text(cfg) -> str:
@@ -217,6 +245,7 @@ class MainWindow(QMainWindow):
         self.home.set_running(False)
         self.statusBar().showMessage("就绪")
         self.runlog.refresh()
+        self.home.refresh_last()
 
     def _log(self, text: str) -> None:
         self.home.append_log(text)

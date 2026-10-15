@@ -121,3 +121,14 @@ def test_runlog_page_reads_reports(tmp_path, qapp, monkeypatch) -> None:
     page = pages_mod.RunLogPage()
     assert page.list.count() == 1
     assert "StartUp" in page.detail.toPlainText()
+
+
+def test_wizard_constructs(qapp, tmp_path) -> None:
+    from ak_auto.application import ConfigurationService
+    from ak_auto.gui.wizard import FirstRunWizard
+
+    svc = ConfigurationService(tmp_path / "c.json")
+    wiz = FirstRunWizard(svc.load(), svc)
+    assert len(wiz.pageIds()) == 5
+    assert wiz.windowTitle() == "ak-auto 首次启动向导"
+    wiz.close()

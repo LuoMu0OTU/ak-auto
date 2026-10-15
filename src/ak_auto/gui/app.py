@@ -6,11 +6,12 @@ import sys
 
 def run_gui() -> int:
     """启动图形界面并进入事件循环；返回 Qt 退出码。"""
-    from PySide6.QtWidgets import QApplication
+    from PySide6.QtWidgets import QApplication, QDialog
 
     from ..application import ConfigurationService
     from .main_window import MainWindow
     from .theme import apply_theme
+    from .wizard import FirstRunWizard
 
     svc = ConfigurationService()
     cfg = svc.load()
@@ -19,6 +20,12 @@ def run_gui() -> int:
     app.setApplicationName("ak-auto")
     app.setOrganizationName("ak-auto")
     apply_theme(app)
+
+    # 首次运行（无配置文件）→ 先走向导
+    if not svc.path.exists():
+        wiz = FirstRunWizard(cfg, svc)
+        if wiz.exec() != QDialog.DialogCode.Accepted:
+            return 0
 
     win = MainWindow(cfg)
     if svc.warning:
