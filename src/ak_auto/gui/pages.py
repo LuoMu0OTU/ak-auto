@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from PySide6.QtCore import QThread, Signal
 from PySide6.QtWidgets import (
     QCheckBox,
     QFormLayout,
@@ -20,6 +21,19 @@ from PySide6.QtWidgets import (
 
 from ..application import ConfigurationService
 from ..config import PROJECT_ROOT, AppConfig
+
+
+class _FnThread(QThread):
+    """把任意函数放到后台线程跑，结果经信号回 UI。"""
+
+    done = Signal(object)
+
+    def __init__(self, fn, parent=None) -> None:
+        super().__init__(parent)
+        self.fn = fn
+
+    def run(self) -> None:  # noqa: D102
+        self.done.emit(self.fn())
 
 
 class SettingsPage(QWidget):
@@ -313,3 +327,68 @@ class AdvancedPage(QWidget):
         self.retry.setValue(d.runtime.retry_per_task)
         self.shot_on_error.setChecked(d.runtime.screenshot_on_error)
         self.status.setText("已恢复默认（点「保存」生效）")
+
+
+class DiagnosticsPage(QWidget):
+    """诊断页（Phase 4）：doctor 自检 / 窗口探测（后台线程，不阻塞 UI）。"""
+
+    def __init__(self, cfg: AppConfig, parent=None) -> None:
+        super().__init__(parent)
+        self.cfg = cfg
+        title = QLabel("诊断")
+        title.setObjectName("title")
+        hint = QLabel("环境自检与窗口探测；只读检查，不执行任何游戏操作。")
+        hint.setObjectName("muted")
+
+        self.output = QPlainTextEdit()
+        self.output.setReadOnly(True)
+        self.output.setPlaceholderText("点击上方按钮开始。")
+
+        self.check_btn = QPushButton("运行自检（doctor）")
+        self.check_btn.clicked.connect(self._run_checks)
+        self.win_btn = QPushButton("窗口列表（probe）")
+        self.win_btn.clicked.connect(self._run_windows)
+
+        row = QHBoxLayout()
+        row.addWidget(self.check_btn)
+        row.addWidget(self.win_btn)
+        row.addStretch(1)
+
+        lay = QVBoxLayout(self)
+        lay.addWidget(title)
+        lay.addWidget(hint)
+        lay.addLayout(row)
+        lay.addWidget(self.output, 1)
+
+    def _run_checks(self) -> None:
+        from ..application.diagnostics import run_checks
+
+        self.output.setPlainText("自检中 ...")
+        self.check_btn.setEnabled(False)
+
+        def render(checks) -> None:
+            self.check_btn.setEnabled(True)
+            lines = [f"[{'OK ' if ok else 'FAIL'}] {name}  {msg}" for name, ok, msg in checks]
+            lines += ["", "结论：" + ("全部通过" if all(ok for _, ok, _ in checks) else "存在未通过项")]
+            self.output.setPlainText("\n".join(lines))
+
+        self._thread = _FnThread(lambda: run_checks(self.cfg))
+        self._thread.done.connect(render)
+        self._thread.start()
+
+    def _run_windows(self) -> None:
+        from ..application.diagnostics import window_list
+
+        self.output.setPlainText("探测中 ...")
+        self.win_btn.setEnabled(False)
+
+        def render(wins) -> None:
+            self.win_btn.setEnabled(True)
+            lines = [f"共 {len(wins)} 个窗口（匹配 device.window_match 的会被识别为游戏）", ""]
+            for w in wins:
+                lines.append(f"hwnd={w['hwnd']}\tclass={w['class_name']!r}\ttitle={w['window_name']!r}")
+            self.output.setPlainText("\n".join(lines))
+
+        self._thread = _FnThread(lambda: window_list())
+        self._thread.done.connect(render)
+        self._thread.start()

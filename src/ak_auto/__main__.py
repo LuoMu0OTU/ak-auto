@@ -35,43 +35,9 @@ def _callback() -> None:
 @app.command("doctor")
 def doctor() -> None:
     """环境 / 资源 / 窗口 / 截图自检。"""
-    from ak_auto import device
+    from ak_auto.application.diagnostics import run_checks
 
-    checks: list[tuple[str, bool, str]] = []
-
-    # Python 版本
-    py = sys.version_info
-    ok = (py.major, py.minor) == (3, 12)
-    checks.append(("Python 3.12", ok, f"{py.major}.{py.minor}.{py.micro}" + ("" if ok else "（必须 3.12）")))
-
-    # MaaFw
-    try:
-        import maa  # noqa: F401
-        checks.append(("MaaFw 可导入", True, "ok"))
-    except Exception as e:  # noqa: BLE001
-        checks.append(("MaaFw 可导入", False, str(e)))
-
-    # 资源
-    from ak_auto.infrastructure import AssetManager
-
-    am = AssetManager().status()
-    checks.append(("识别资源（MANIFEST）", am["manifest"], "存在" if am["manifest"] else "缺失，请先 `fetch-assets`"))
-    checks.append(("OCR 模型", am["ocr"], "就绪" if am["ocr"] else "缺失，请先 `fetch-assets`"))
-    checks.append(("模板图", am["images"], "就绪" if am["images"] else "缺失，请先 `fetch-assets`"))
-
-    # 游戏
-    cfg = _load_config()
-    import os
-    game = cfg.startup.game_path
-    checks.append(("游戏路径存在", os.path.isfile(game), game))
-
-    # 窗口
-    try:
-        device.init_maa()
-        win = device.find_game_window(cfg)
-        checks.append(("游戏窗口", win is not None, f"hwnd={win['hwnd']} title={win['window_name']!r}" if win else "未找到（游戏是否已启动？）"))
-    except Exception as e:  # noqa: BLE001
-        checks.append(("游戏窗口", False, str(e)))
+    checks = run_checks(_load_config())
 
     width = max(len(name) for name, _, _ in checks)
     for name, ok, msg in checks:
