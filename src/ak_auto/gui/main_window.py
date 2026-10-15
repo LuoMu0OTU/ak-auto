@@ -8,8 +8,10 @@ from __future__ import annotations
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QCheckBox,
+    QComboBox,
     QHBoxLayout,
     QLabel,
+    QLineEdit,
     QListWidget,
     QMainWindow,
     QPlainTextEdit,
@@ -21,11 +23,13 @@ from PySide6.QtWidgets import (
 )
 
 from ..application import ConfigurationService
+from ..config import PresetConfig
 from ..domain import all_tasks
-from .pages import AdvancedPage, RunLogPage, SettingsPage
+from .pages import AdvancedPage, DiagnosticsPage, RunLogPage, SettingsPage
 from .worker import TaskWorker
 
 NAV_ITEMS = ["首页", "任务中心", "运行记录", "设置"]
+ADVANCED_NAV = ["高级设置", "诊断"]  # 仅高级模式显示
 
 FIXED_PRESETS: dict[str, list[str]] = {
     "快速收菜": ["Infrast"],
@@ -163,9 +167,10 @@ class HomePage(QWidget):
 class TaskPage(QWidget):
     run_requested = Signal(list)
 
-    def __init__(self, cfg, parent=None) -> None:
+    def __init__(self, cfg, svc: ConfigurationService | None = None, parent=None) -> None:
         super().__init__(parent)
         self.cfg = cfg
+        self.svc = svc or ConfigurationService()
         title = QLabel("任务中心")
         title.setObjectName("title")
         hint = QLabel("勾选要执行的任务（仅展示真实可用任务），点「开始执行」。每日常规 = 配置的任务顺序。")
@@ -177,13 +182,30 @@ class TaskPage(QWidget):
             cb.setChecked(t.id in self._preset_ids("每日常规"))
             self.checks[t.id] = cb
 
-        preset_row = QHBoxLayout()
-        preset_row.addWidget(QLabel("预设："))
-        for name in self.preset_names():
-            btn = QPushButton(name)
-            btn.clicked.connect(lambda _=False, n=name: self.apply_preset(n))
-            preset_row.addWidget(btn)
-        preset_row.addStretch(1)
+        self.preset_row = QHBoxLayout()
+
+        # 预设管理（仅高级模式显示）
+        self.preset_edit = QLineEdit()
+        self.preset_edit.setPlaceholderText("预设名称")
+        self.save_preset_btn = QPushButton("保存当前勾选")
+        self.save_preset_btn.clicked.connect(self._save_preset)
+        self.preset_combo = QComboBox()
+        self.preset_combo.setMinimumWidth(140)
+        self.delete_preset_btn = QPushButton("删除")
+        self.delete_preset_btn.clicked.connect(self._delete_preset)
+        self.preset_status = QLabel("")
+        self.preset_status.setObjectName("muted")
+        mgmt_row = QHBoxLayout()
+        mgmt_row.addWidget(self.preset_edit)
+        mgmt_row.addWidget(self.save_preset_btn)
+        mgmt_row.addWidget(self.preset_combo)
+        mgmt_row.addWidget(self.delete_preset_btn)
+        mgmt_row.addWidget(self.preset_status)
+        mgmt_row.addStretch(1)
+        self._mgmt_label = QLabel("预设管理：")
+        mgmt_row.insertWidget(0, self._mgmt_label)
+        self._mgmt_widgets = [self._mgmt_label, self.preset_edit, self.save_preset_btn,
+                              self.preset_combo, self.delete_preset_btn, self.preset_status]
 
         self.run_btn = QPushButton("开始执行")
         self.run_btn.setObjectName("primary")
@@ -192,14 +214,19 @@ class TaskPage(QWidget):
         lay = QVBoxLayout(self)
         lay.addWidget(title)
         lay.addWidget(hint)
-        lay.addLayout(preset_row)
+        lay.addLayout(self.preset_row)
+        lay.addLayout(mgmt_row)
         for cb in self.checks.values():
             lay.addWidget(cb)
         lay.addWidget(self.run_btn)
         lay.addStretch(1)
 
+        self.refresh_presets()
+        self.refresh_mode()
+
+    # ---- 预设 ----
     def preset_names(self) -> list[str]:
-        """内置推荐预设 + 用户自定义预设（推荐与自定义在界面上区分显示）。"""
+        """内置推荐预设 + 用户自定义预设。"""
         names = ["每日常规"] + list(FIXED_PRESETS)
         names += [p.name for p in self.cfg.custom_presets if p.name]
         return names
@@ -213,6 +240,59 @@ class TaskPage(QWidget):
             if p.name == name:
                 return list(p.task_ids)
         return []
+
+    def refresh_presets(self) -> None:
+        """重建预设按钮与删除下拉框。"""
+        while self.preset_row.count():
+            item = self.preset_row.takeAt(0)
+            w = item.widget()
+            if w:
+                w.deleteLater()
+        self.preset_row.addWidget(QLabel("预设："))
+        for name in self.preset_names():
+            btn = QPushButton(name)
+            btn.clicked.connect(lambda _=False, n=name: self.apply_preset(n))
+            self.preset_row.addWidget(btn)
+        self.preset_row.addStretch(1)
+
+        self.preset_combo.clear()
+        for p in self.cfg.custom_presets:
+            if p.name:
+                self.preset_combo.addItem(p.name)
+
+    def refresh_mode(self) -> None:
+        """高级模式才显示预设管理行。"""
+        visible = self.cfg.ui.mode == "advanced"
+        for w in self._mgmt_widgets:
+            w.setVisible(visible)
+
+    def _save_preset(self) -> None:
+        name = self.preset_edit.text().strip()
+        if not name:
+            self.preset_status.setText("请先输入预设名称")
+            return
+        if name in ("每日常规", *FIXED_PRESETS):
+            self.preset_status.setText("名称与内置预设冲突，请换一个")
+            return
+        ids = [t.id for t in all_tasks() if self.checks[t.id].isChecked()]
+        if not ids:
+            self.preset_status.setText("请先勾选任务")
+            return
+        self.cfg.custom_presets = [p for p in self.cfg.custom_presets if p.name != name]
+        self.cfg.custom_presets.append(PresetConfig(name=name, task_ids=ids))
+        self.svc.save(self.cfg)
+        self.refresh_presets()
+        self.preset_status.setText(f"已保存预设「{name}」（{len(ids)} 个任务）")
+
+    def _delete_preset(self) -> None:
+        name = self.preset_combo.currentText()
+        if not name:
+            self.preset_status.setText("没有可删除的自定义预设")
+            return
+        self.cfg.custom_presets = [p for p in self.cfg.custom_presets if p.name != name]
+        self.svc.save(self.cfg)
+        self.refresh_presets()
+        self.preset_status.setText(f"已删除预设「{name}」")
 
     def apply_preset(self, name: str) -> None:
         ids = self._preset_ids(name)
@@ -238,21 +318,23 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("ak-auto — 明日方舟本地自动化助手")
         self.resize(1024, 680)
 
-        # 左侧导航：常规页面 + 高级设置（仅高级模式显示）+ 底部模式切换
+        # 左侧导航：常规页面 + 高级页面（仅高级模式显示）+ 底部模式切换
         self.nav = QListWidget()
-        self.nav.addItems(NAV_ITEMS + ["高级设置"])
+        self.nav.addItems(NAV_ITEMS + ADVANCED_NAV)
         self.nav.setFixedWidth(168)
 
         self.home = HomePage(cfg)
-        self.task_page = TaskPage(cfg)
+        self.task_page = TaskPage(cfg, self.svc)
         self.runlog = RunLogPage()
         self.advanced = AdvancedPage(cfg, self.svc)
+        self.diagnostics = DiagnosticsPage(cfg)
         self.pages = QStackedWidget()
         self.pages.addWidget(self.home)
         self.pages.addWidget(self.task_page)
         self.pages.addWidget(self.runlog)
         self.pages.addWidget(SettingsPage(cfg, self.svc))
         self.pages.addWidget(self.advanced)
+        self.pages.addWidget(self.diagnostics)
 
         self.home.run_requested.connect(self._start)
         self.home.stop_requested.connect(self._stop)
@@ -282,9 +364,11 @@ class MainWindow(QMainWindow):
     # ---- 模式切换（简单 / 高级）----
     def _refresh_mode_ui(self) -> None:
         advanced = self.cfg.ui.mode == "advanced"
-        self.nav.item(4).setHidden(not advanced)
+        for i in range(len(NAV_ITEMS), len(NAV_ITEMS) + len(ADVANCED_NAV)):
+            self.nav.item(i).setHidden(not advanced)
         self.mode_btn.setText("模式：高级" if advanced else "模式：简单")
         self.mode_btn.setToolTip("切换简单/高级模式（不影响已保存的参数）")
+        self.task_page.refresh_mode()
 
     def _toggle_mode(self) -> None:
         self.cfg.ui.mode = "advanced" if self.cfg.ui.mode == "simple" else "simple"

@@ -38,9 +38,9 @@ def test_main_window_constructs(qapp) -> None:
 
     win = MainWindow(AppConfig())
     assert win.windowTitle() == "ak-auto — 明日方舟本地自动化助手"
-    assert win.nav.count() == len(NAV_ITEMS) + 1 == 5  # 4 常规页 + 高级设置
-    assert win.pages.count() == 5
-    assert win.nav.item(4).isHidden()  # 简单模式下隐藏高级设置
+    assert win.nav.count() == len(NAV_ITEMS) + 2 == 6  # 4 常规页 + 高级设置 + 诊断
+    assert win.pages.count() == 6
+    assert win.nav.item(4).isHidden() and win.nav.item(5).isHidden()  # 简单模式下隐藏
     assert win.home.start_btn.isEnabled() is True
     assert win.home.stop_btn.isEnabled() is False  # 未运行时停止按钮禁用
     win.close()
@@ -223,3 +223,57 @@ def test_advanced_page_save(qapp, tmp_path) -> None:
     assert loaded.fight.min_sanity == 30
     assert loaded.recruit.tag_priority == ["资深干员", "高级资深干员"]
     assert loaded.runtime.task_order == page._order()
+
+
+def test_preset_management_save_delete(qapp, tmp_path) -> None:
+    from ak_auto.application import ConfigurationService
+    from ak_auto.gui.main_window import TaskPage
+
+    svc = ConfigurationService(tmp_path / "c.json")
+    cfg = svc.load()
+    cfg.ui.mode = "advanced"
+    page = TaskPage(cfg, svc)
+
+    page.apply_preset("快速收菜")  # 勾选 Infrast
+    page.preset_edit.setText("我的预设")
+    page._save_preset()
+
+    assert "我的预设" in page.preset_names()
+    reloaded = svc.load()
+    assert reloaded.custom_presets[0].name == "我的预设"
+    assert reloaded.custom_presets[0].task_ids == ["Infrast"]
+
+    page.preset_combo.setCurrentText("我的预设")
+    page._delete_preset()
+    assert "我的预设" not in page.preset_names()
+    assert svc.load().custom_presets == []
+
+
+def test_preset_management_hidden_in_simple_mode(qapp) -> None:
+    from ak_auto.gui.main_window import TaskPage
+
+    cfg = AppConfig()
+    page = TaskPage(cfg)
+    assert page.preset_edit.isHidden()  # 简单模式隐藏管理行
+
+    cfg.ui.mode = "advanced"
+    page.refresh_mode()
+    assert not page.preset_edit.isHidden()
+
+
+def test_diagnostics_page_constructs(qapp) -> None:
+    from ak_auto.gui.pages import DiagnosticsPage
+
+    page = DiagnosticsPage(AppConfig())
+    assert page.check_btn.isEnabled() and page.win_btn.isEnabled()
+
+
+def test_diagnostics_run_checks() -> None:
+    from ak_auto.application.diagnostics import run_checks
+
+    checks = run_checks(AppConfig())
+    names = [n for n, _, _ in checks]
+    assert "Python 3.12" in names
+    assert "识别资源（MANIFEST）" in names
+    assert "游戏窗口" in names
+    assert all(isinstance(ok, bool) and isinstance(msg, str) for _, ok, msg in checks)
