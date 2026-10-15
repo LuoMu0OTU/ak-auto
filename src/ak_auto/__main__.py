@@ -173,6 +173,7 @@ def run(
     config: str = typer.Option("", "--config", help="config.json 路径"),
 ) -> None:
     """连接游戏并运行指定任务。"""
+    from ak_auto import device
     from ak_auto.domain import EventBus, ExecutionResult, ExecutionState, resolve_task
 
     # 任务名解析：先查任务目录（支持中文名），查不到则按原始流水线节点名执行（兼容）

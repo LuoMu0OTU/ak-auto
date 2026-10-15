@@ -8,15 +8,15 @@ Agent 可恢复工作状态
 
 更新日期：2026-10-13
 
-当前阶段：Phase 1 核心解耦（进行中，任务 7/8 完成）
+当前阶段：Phase 1 核心解耦（八项全部完成，待人工验收）
 
 当前分支：main
 
-HEAD：d8cd37f（本轮任务 7 提交前基线；任务 7 提交号见 git log 最新一条）
+HEAD：aee4195（任务 7 提交；任务 8 提交号见 git log 最新一条）
 
 工作区状态：干净（原未提交的 infrast.json 已按负责人授权提交并推送）
 
-本轮获准任务：Phase 1（经人工授权）。本轮完成第 1 项：TaskDefinition 任务目录；CLI 保持兼容。
+本轮获准任务：Phase 1（经人工授权，八项任务全部完成）；推送已授权。
 
 
 已完成
@@ -56,12 +56,18 @@ HEAD：d8cd37f（本轮任务 7 提交前基线；任务 7 提交号见 git log 
   - 新增 tests/fakes.py：共享假对象（FakeNode/FakeStatus/FakeDetail/FakeJob/BlockingJob/FakeTasker/BlockingTasker），test_events 与 test_execution 改为引用共享版（消除重复）。
   - 录制截图回归：tests/fixtures/selector_rows.png（真机录下的次数列表裁剪，90KB 入库）；新增 tests/test_bright_rows.py 3 例（合成白色条带/灰色忽略/录制图检出行）。
   - 说明：MaaFw 无「任意图片跑识别」的公开 API（识别必须经 Tasker+控制器），故回归针对 Python 层图像逻辑（bright_rows）；完整识别回归待 Phase 5 截图回归机制。
+- Phase 1 任务 8 —— CLI 兼容验收 + 真机取消验证（本机真机完成）：
+  - doctor / probe --list / restore：正常（游戏未运行时提示符合预期）。
+  - run ReturnToHome / run StartUp：任务目录解析 → 自动启动 → 事件（▶/✔）→ 控制器执行 → OK（StartUp 26 节点冷启动到主界面）。
+  - daily（最小 task_order）：控制器路径 + 报告渲染/保存正常。
+  - **真机取消**：完整序列第 15 秒 cancel → 正在执行的 AwardVisit 被 post_stop 中断（4.2s 而非 ~40s）→ TASK_CANCELLED 事件 → 剩余任务全部 CANCELLED 未执行 → 终态 cancelled → 窗口已还原；取消后游戏在好友界面，ReturnToHome 一次回到主界面（可恢复，安全）。
+  - 已知项（非本次回归）：StartUp 从非主界面（如好友界面）启动会卡 CloseAnno 固定点击循环——daily 默认顺序依赖「开局在主界面」，中断后先 ReturnToHome 再 daily。
 
 
 进行中 / 待办
 
-Phase 1 剩余一项：
-8. CLI 兼容验收（run/daily/doctor/probe/restore 与 Phase 0 行为一致）+ ADR-0002 的真机验证（post_stop 对真实任务的中断能力、取消后画面状态）。此任务需要真实游戏，属人工配合项。
+- 等人工验收 Phase 1（验收点见下）。
+- 验收通过后：Phase 2 GUI 基础（先确认 ADR-0001 的 PySide6 选型，再做最小窗口原型）。
 
 
 修改文件
@@ -75,11 +81,11 @@ Phase 1 剩余一项：
 
 命令	结果	环境/备注
 python -m pytest -q	59 passed（15 旧 + 44 新）	Python 3.12.10 / pytest 9.1.1
-python -m ak_auto doctor	资源三项经 AssetManager 检查 OK	游戏未运行时窗口项 FAIL 属预期
 python -m ak_auto tasks	正常列出 10 个任务（CJK 对齐）	—
-录制截图回归	bright_rows 在真机录制图上检出 8 个白色数字行	fixture 90KB 入库
-本地真实 config 经服务加载	schema_version 0→1 无损兼容，warning=None	—
-真机验证	未做	post_stop 对真实任务的中断能力列入任务 8 真机对照（ADR-0002）
+真机 run StartUp / ReturnToHome	经新架构（目录+适配器+控制器+事件）OK	本机真实游戏
+真机 daily（最小 order）	报告渲染/保存正常	本机真实游戏
+真机取消（mid-task）	post_stop 中断 AwardVisit → CANCELLED → 剩余跳过 → 窗口还原	本机真实游戏，ADR-0002 验证通过
+doctor / probe / restore	正常	本机
 
 
 已知问题 / 风险 / 阻塞
@@ -104,11 +110,11 @@ python -m ak_auto tasks	正常列出 10 个任务（CJK 对齐）	—
 
 1. 重新读取 AGENTS.md、SESSION_START.md、本文件与 docs/ROADMAP.md。
 2. git status / git log 确认本轮提交与工作区状态。
-3. 继续 Phase 1 任务 8（最后一项，需真实游戏）：CLI 兼容验收（run/daily/doctor/probe/restore 与 Phase 0 行为一致）+ post_stop 真机验证。先输出计划，真机项需项目负责人配合。
+3. 若 Phase 1 已人工验收：请项目负责人确认 ADR-0001（PySide6）后，按 ROADMAP 进入 Phase 2（GUI 基础，先最小窗口原型）。
 
 
 阶段验收状态
 
 
 Phase 0：✅ 已人工验收（2026-10-13）
-Phase 1：进行中（7/8），任务 8 完成后整体提交人工验收
+Phase 1：八项全部完成 + 测试全绿 + 真机验收通过 —— 待人工验收
