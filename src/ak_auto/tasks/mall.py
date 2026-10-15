@@ -1,4 +1,4 @@
-"""采购任务：信用商店购买（只买「加急许可」，买一次就停）。"""
+"""采购任务：信用商店购买（按配置的购买优先级 + 黑名单，Phase 5）。"""
 from __future__ import annotations
 
 from maa.custom_action import CustomAction
@@ -6,7 +6,9 @@ from maa.resource import Resource
 
 from ..config import AppConfig
 
-_bought = False
+
+def _norm(text: str) -> str:
+    return (text or "").strip().replace(" ", "")
 
 
 def _box_xywh(box) -> tuple[int, int, int, int]:
@@ -16,35 +18,60 @@ def _box_xywh(box) -> tuple[int, int, int, int]:
     return (t[0], t[1], t[2], t[3])
 
 
+def pick_item(
+    items: list[str],
+    buy_first: list[str],
+    blacklist: list[str],
+    already_bought: list[str],
+) -> str | None:
+    """信用购买优先级：按 buy_first 顺序选第一个「在售、未买过、不在黑名单」的物品。
+
+    OCR 文本可能截断，匹配双向包含；返回配置里的物品名（找不到返回 None）。
+    """
+    in_sale = {_norm(t) for t in items if _norm(t)}
+    bought = {_norm(t) for t in already_bought}
+    black = {_norm(t) for t in blacklist}
+    for want in buy_first:
+        w = _norm(want)
+        if not w or w in black or w in bought:
+            continue
+        for t in in_sale:
+            if w in t or t in w:
+                return want
+    return None
+
+
 class MallSelectBuy(CustomAction):
-    """在信用商店里找到「加急许可」并点击；买过一次后停止。"""
+    """在信用商店里按 buy_first 顺序购买物品（每项最多买一次）。"""
+
+    def __init__(self, cfg: AppConfig) -> None:
+        super().__init__()
+        self.cfg = cfg
+        self._bought: list[str] = []
 
     def run(self, context, argv) -> bool:
-        global _bought
-        if _bought:
-            print("[mall] 已买过加急许可，停止", flush=True)
-            return False
-
         img = context.tasker.controller.cached_image
         od = context.run_recognition("Mall@OcrItems", img)
         if not od:
             return False
 
-        for r in od.all_results:
-            text = (getattr(r, "text", "") or "").strip()
-            box = getattr(r, "box", None)
-            if text and box is not None and "加急许可" in text:
-                x, y, w, h = _box_xywh(box)
-                context.tasker.controller.post_click(x + w // 2, y + h // 2).wait()
-                _bought = True
-                print(f"[mall] 点击购买 加急许可 ({x},{y},{w},{h})", flush=True)
-                return True
+        results = [r for r in od.all_results if getattr(r, "text", "") and getattr(r, "box", None)]
+        items = [getattr(r, "text", "") for r in results]
+        pick = pick_item(items, self.cfg.mall.buy_first, self.cfg.mall.blacklist, self._bought)
+        if not pick:
+            print(f"[mall] 无可买物品（目标={self.cfg.mall.buy_first} 已买={self._bought}），停止", flush=True)
+            return False
 
-        print("[mall] 未找到加急许可，停止", flush=True)
+        for r in results:
+            text = _norm(getattr(r, "text", ""))
+            if _norm(pick) in text or text in _norm(pick):
+                x, y, w, h = _box_xywh(getattr(r, "box"))
+                context.tasker.controller.post_click(x + w // 2, y + h // 2).wait()
+                self._bought.append(pick)
+                print(f"[mall] 购买 {pick} ({x},{y},{w},{h})", flush=True)
+                return True
         return False
 
 
-def register(resource: Resource) -> None:
-    global _bought
-    _bought = False
-    resource.register_custom_action("MallSelectBuy", MallSelectBuy())
+def register(resource: Resource, cfg: AppConfig) -> None:
+    resource.register_custom_action("MallSelectBuy", MallSelectBuy(cfg))

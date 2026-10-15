@@ -12,7 +12,7 @@
 | 3 | 基建换班（shift_presets） | ⏳ 未完成 | 见下 |
 | 4 | 运行统计 | ✅ 完成 | 见下 |
 | 5 | 截图回归 | ✅ 完成（结构回归防线） | 见下 |
-| 6 | 自定义排序/预设管理/信用优先级 | ✅ 已在 Phase 4 完成 | mall.buy_first 既有；排序与预设管理 Phase 4 验收 |
+| 6 | 自定义排序/预设管理/信用优先级 | ✅ 完成 | 排序/预设管理 Phase 4 验收；信用购买优先级本轮落地（见下） |
 
 ## 已完成项证据
 
@@ -30,6 +30,10 @@
 **⑤ 截图回归（结构回归防线）**
 - tests/test_pipeline_structure.py 6 例：全部流水线 next/on_error 引用完整、Fight 链可达终节点且不跨文件、关键点击目标在 1280×720 内、自定义动作均已注册、回归夹具存在、任务目录入口全部在流水线中。
 - tests/fixtures/README.md：夹具采集流程与约束（后续扩展采集的规范）。
+
+**⑥ 信用购买优先级（P1 补充项）**
+- tasks/mall.py：按 `mall.buy_first` 顺序购买（每项最多一次）、跳过 `mall.blacklist`；pick_item 纯函数（OCR 截断容错）。原硬编码「加急许可」改为配置驱动。
+- 测试：tests/test_mall_strategy.py 5 例。
 
 ## Fight 部分完成项
 
@@ -50,7 +54,7 @@
 
 ## 测试与验证汇总
 
-- `pytest`：**108 passed，exit=0**（Phase 5 新增 20 例：fight 6 + recruit 5 + stats 3 + 流水线结构 6）。
+- `pytest`：**113 passed，exit=0**（Phase 5 新增 25 例：fight 6 + recruit 5 + stats 3 + 流水线结构 6 + mall 5）。
 - 流水线 lint：0 错误 0 警告。
 - 真机：公招/统计为代码层验证；Fight 导航与选择器路径真机复现（如上）。
 

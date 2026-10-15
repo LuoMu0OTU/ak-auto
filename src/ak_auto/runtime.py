@@ -46,5 +46,5 @@ def _register_custom(res: Resource, cfg: AppConfig) -> None:
     from .tasks import fight, mall, recruit
 
     recruit.register(res, cfg)
-    mall.register(res)
+    mall.register(res, cfg)
     fight.register(res, cfg)
