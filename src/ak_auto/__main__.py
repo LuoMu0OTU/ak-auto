@@ -147,8 +147,20 @@ def run(
     """连接游戏并运行指定任务。"""
     from ak_auto import device
     from ak_auto.config import AppConfig
+    from ak_auto.domain import resolve_task
     from ak_auto.runtime import build_tasker
     from ak_auto.scheduler import run_task
+
+    # 任务名解析：先查任务目录（支持中文名），查不到则按原始流水线节点名执行（兼容）
+    td = resolve_task(task)
+    if td:
+        entry = td.entry or td.id
+        typer.echo(f"[task] {td.id} — {td.name}（{td.category}，风险：{td.risk_level}）")
+        if td.risk_level == "high":
+            typer.echo("        ⚠ 高风险任务：可能消耗理智或付费资源，请先确认 config 相关设置。")
+    else:
+        entry = task
+        typer.echo(f"[task] 未登记任务，按原始流水线节点名执行：{entry}")
 
     device.init_maa()
     cfg = AppConfig.load(config or None)
@@ -165,7 +177,7 @@ def run(
             device.parse_input(cfg.device.keyboard_input),
         )
         tasker = build_tasker(cfg, ctrl)
-        result = run_task(tasker, task)
+        result = run_task(tasker, entry)
         typer.echo(result.summary)
         for n in result.nodes:
             typer.echo(f"  - {n}")
@@ -181,12 +193,19 @@ def daily(config: str = typer.Option("", "--config", help="config.json 路径"))
     """日常全家桶。"""
     from ak_auto import device
     from ak_auto.config import AppConfig
+    from ak_auto.domain import resolve_task
     from ak_auto.report import make_report
     from ak_auto.runtime import build_tasker
     from ak_auto.scheduler import run_sequence
 
     device.init_maa()
     cfg = AppConfig.load(config or None)
+
+    # 校验 task_order：不在任务目录里的项给出警告（是否真的执行由流水线节点是否存在决定）
+    for t in cfg.runtime.task_order:
+        if resolve_task(t) is None:
+            typer.echo(f"[warn] runtime.task_order 里的 {t!r} 不在任务目录中，可能是无效任务")
+
     win = device.ensure_game_window(cfg, on_log=typer.echo)
     if not win:
         typer.echo("未找到游戏窗口，自动启动也没成功。请确认 config 的 startup.game_path，或手动打开游戏。")
@@ -219,6 +238,22 @@ def daily(config: str = typer.Option("", "--config", help="config.json 路径"))
     finally:
         device.restore_window(win["hwnd"])
     raise typer.Exit(code)
+
+
+@app.command("tasks")
+def tasks() -> None:
+    """列出任务目录（ID / 名称 / 分类 / 风险）。"""
+    from ak_auto.domain import all_tasks
+
+    def _w(s: str) -> int:  # CJK 按 2 列宽近似
+        return sum(2 if ord(c) > 0x2E80 else 1 for c in s)
+
+    rows = [(t.id, t.name, t.category, t.risk_level) for t in all_tasks()]
+    widths = [max(_w(r[i]) for r in rows) for i in range(4)]
+    for r in rows:
+        line = "  ".join(r[i] + " " * (widths[i] - _w(r[i])) for i in range(4))
+        typer.echo(line)
+    typer.echo(f"\n共 {len(rows)} 个任务。")
 
 
 @app.command("restore")
