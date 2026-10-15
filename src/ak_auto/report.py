@@ -38,7 +38,18 @@ class RunReport:
             "started_at": self.started_at,
             "all_ok": self.all_ok,
             "total_ms": self.total_ms,
-            "tasks": [{"entry": t.entry, "ok": t.ok, "status": t.status, "duration_ms": t.duration_ms, "nodes": t.nodes} for t in self.tasks],
+            "tasks": [
+                {
+                    "entry": t.entry,
+                    "ok": t.ok,
+                    "status": t.status,
+                    "run_id": getattr(t, "run_id", ""),
+                    "error": getattr(t, "error", ""),
+                    "duration_ms": t.duration_ms,
+                    "nodes": t.nodes,
+                }
+                for t in self.tasks
+            ],
         }
         p.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         return p

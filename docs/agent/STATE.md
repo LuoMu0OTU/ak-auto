@@ -8,11 +8,11 @@ Agent 可恢复工作状态
 
 更新日期：2026-10-13
 
-当前阶段：Phase 1 核心解耦（进行中，任务 1/8 完成）
+当前阶段：Phase 1 核心解耦（进行中，任务 2/8 完成）
 
 当前分支：main
 
-HEAD：f611824（本轮任务 1 提交前基线；任务 1 提交号见 git log 最新一条）
+HEAD：6be1c57（本轮任务 2 提交前基线；任务 2 提交号见 git log 最新一条）
 
 工作区状态：干净（原未提交的 infrast.json 已按负责人授权提交并推送）
 
@@ -27,12 +27,16 @@ HEAD：f611824（本轮任务 1 提交前基线；任务 1 提交号见 git log 
   - 新增 src/ak_auto/domain/taskdef.py：TaskDefinition + ParamSpec 模型（id/名称/分类/描述/参数 Schema/默认推荐值/风险等级/前置条件/执行入口/超时/重试/错误说明）+ 10 个任务的目录 + resolve_task（按 ID/中文名/忽略大小写解析）。
   - CLI 集成：run 经目录解析（支持中文名；未登记的名称按原始流水线节点名兼容执行）；daily 对 task_order 逐项校验并警告；新增 tasks 子命令列出目录。
   - 测试：tests/test_taskdef.py 6 例（目录完整/唯一、必选任务、解析、Fight 安全默认、task_order 一致性、入口在流水线中存在）。
+- Phase 1 任务 2 —— ExecutionState 状态机 + ExecutionResult：
+  - 新增 src/ak_auto/domain/state.py：ExecutionState 七态枚举（PENDING/PREPARING/RUNNING/STOPPING/SUCCEEDED/FAILED/CANCELLED，Paused 暂不启用）+ 合法转移表 + StateMachine（终态无出边）+ ExecutionResult（run_id/task_id/state/起止时间/错误/nodes，保留 entry/ok/status/summary 兼容属性）+ new_run_id。
+  - scheduler.py：TaskResult 改为 ExecutionResult 别名；run_task 经状态机跟踪（PENDING→PREPARING→RUNNING→终态）产出 ExecutionResult；run_sequence 的 missing-node 改用错误码。
+  - report.py：报告 JSON 增加 run_id/error 字段；控制台 summary 格式与旧版一致（合成错误如 missing-node 优先展示）。
+  - 测试：tests/test_state.py 8 例（happy path/取消/停止/非法转移/兼容字段/错误展示/to_dict/别名）。
 
 
 进行中 / 待办
 
-Phase 1 剩余七项（按 docs/ROADMAP.md 拆解顺序）：
-2. ExecutionState 状态机（Pending/Preparing/Running/Stopping/Succeeded/Failed/Cancelled）+ ExecutionResult 兼容 TaskResult；
+Phase 1 剩余六项（按 docs/ROADMAP.md 拆解顺序）：
 3. 事件总线（最小）：TaskStarted/TaskProgress/TaskCompleted/TaskFailed/TaskCancelled/ConnectionChanged，携带 run_id/task_id/时间戳/状态/诊断；
 4. ExecutionController 协作式取消（评估 Tasker.post_stop，不可用则记录降级方案）；
 5. ConfigurationService：schema_version/原子写/备份/损坏恢复/迁移框架（保持 config.json 兼容）；
@@ -43,17 +47,17 @@ Phase 1 剩余七项（按 docs/ROADMAP.md 拆解顺序）：
 
 修改文件
 
-- 新增 src/ak_auto/domain/__init__.py、src/ak_auto/domain/taskdef.py、tests/test_taskdef.py
-- 修改 src/ak_auto/__main__.py（run/daily 走目录解析 + tasks 子命令）
-- 未改动 scheduler/runtime/device/pipeline（任务执行逻辑零变化）
+- 新增 src/ak_auto/domain/__init__.py、domain/taskdef.py、domain/state.py、tests/test_taskdef.py、tests/test_state.py
+- 修改 src/ak_auto/__main__.py（run/daily 走目录解析 + tasks 子命令）、scheduler.py（ExecutionResult）、report.py（run_id/error）
+- 未改动 device/runtime/pipeline（任务执行与设备逻辑零变化）
 
 
 测试与验证
 
 命令	结果	环境/备注
-python -m pytest -q	21 passed（15 旧 + 6 新）	Python 3.12.10 / pytest 9.1.1
+python -m pytest -q	29 passed（15 旧 + 14 新）	Python 3.12.10 / pytest 9.1.1
 python -m ak_auto tasks	正常列出 10 个任务（CJK 对齐）	—
-resolve_task 解析	Recruit/公开招募/recruit→Recruit；Fight@SetRepeat→None（按原始节点名兼容）	—
+report.render() 兼容	OK (succeeded) / FAIL (missing-node) 格式与旧版一致	—
 真机验证	未做	本轮无运行行为改动，无需真机
 
 
@@ -79,11 +83,11 @@ resolve_task 解析	Recruit/公开招募/recruit→Recruit；Fight@SetRepeat→N
 
 1. 重新读取 AGENTS.md、SESSION_START.md、本文件与 docs/ROADMAP.md。
 2. git status / git log 确认本轮提交与工作区状态。
-3. 继续 Phase 1 任务 2：ExecutionState 状态机 + ExecutionResult（兼容现有 TaskResult），先输出计划再动手。
+3. 继续 Phase 1 任务 3：事件总线（最小实现，先自研轻量回调/订阅，不引大依赖），先输出计划再动手。
 
 
 阶段验收状态
 
 
 Phase 0：✅ 已人工验收（2026-10-13）
-Phase 1：进行中（1/8），按任务逐项自验 + 全部完成后人工验收
+Phase 1：进行中（2/8），按任务逐项自验 + 全部完成后人工验收
