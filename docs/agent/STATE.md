@@ -8,11 +8,11 @@ Agent 可恢复工作状态
 
 更新日期：2026-10-13
 
-当前阶段：Phase 1 核心解耦（进行中，任务 5/8 完成）
+当前阶段：Phase 1 核心解耦（进行中，任务 6/8 完成）
 
 当前分支：main
 
-HEAD：a6e2e2f（本轮任务 5 提交前基线；任务 5 提交号见 git log 最新一条）
+HEAD：f5a278c（本轮任务 6 提交前基线；任务 6 提交号见 git log 最新一条）
 
 工作区状态：干净（原未提交的 infrast.json 已按负责人授权提交并推送）
 
@@ -48,30 +48,33 @@ HEAD：a6e2e2f（本轮任务 5 提交前基线；任务 5 提交号见 git log 
   - 新增 src/ak_auto/application/configsvc.py：load（缺失/损坏/非对象 JSON → 备份 .corrupt.bak + 回退默认 + warning）、save（原子写 tmp+os.replace + 写前 .pre-write.bak）、MIGRATIONS 迁移钩子（按 schema_version 逐版升级）。
   - __main__.py：run/daily/doctor/probe/restore 全部改经 _load_config()（ConfigurationService）。
   - 测试：tests/test_configsvc.py 7 例（缺失默认/往返/备份/损坏恢复/非对象/迁移钩子/部分覆盖）。
+- Phase 1 任务 6 —— Adapters 收敛（最小包裹，不重写内部逻辑）：
+  - 新增 src/ak_auto/infrastructure/：MaaFrameworkAdapter（MaaFw 装配唯一入口 + task_entries）、GameWindowAdapter（acquire/release 生命周期 + 单窗口单控制器互斥 + 还原兜底，WindowNotFound）、AssetManager（status/ready/ensure 资源检查与拉取）。
+  - __main__.py：doctor 的资源检查改走 AssetManager；run/daily 改用 GameWindowAdapter(acquire/release) + MaaFrameworkAdapter(build_tasker)，行为与之前一致（委托现有 device/runtime）。
+  - 测试：tests/test_adapters.py 7 例（资源状态/就绪短路/拉取调用/节点列表/单控制者复用/无窗口异常）。
 
 
 进行中 / 待办
 
-Phase 1 剩余三项（按 docs/ROADMAP.md 拆解顺序）：
-6. Adapters 收敛（最小）：MaaFrameworkAdapter / GameWindowAdapter / AssetManager；
+Phase 1 剩余两项（按 docs/ROADMAP.md 拆解顺序）：
 7. 为新核心补单元测试（Fake 控制器 + 录制截图）；
 8. CLI 兼容验收（run/daily/doctor/probe/restore 与 Phase 0 行为一致，真机对照）。
 
 
 修改文件
 
-- 新增 src/ak_auto/domain/*（taskdef/state/events）、src/ak_auto/application/*（execution/configsvc）、tests/test_taskdef.py、test_state.py、test_events.py、test_execution.py、test_configsvc.py、docs/architecture/adr/0001、0002
-- 修改 src/ak_auto/__main__.py（目录解析 + tasks 命令 + 事件订阅 + 控制器/Ctrl+C + 配置服务）、scheduler.py（ExecutionResult + 事件 + 取消）、config.py（schema_version）、report.py（run_id/error）、config/config.example.json（schema_version）
-- 未改动 device/runtime/pipeline（任务执行与设备逻辑零变化）
+- 新增 src/ak_auto/domain/*（taskdef/state/events）、src/ak_auto/application/*（execution/configsvc）、src/ak_auto/infrastructure/*（maa_adapter/window_adapter/asset_manager）、tests/test_taskdef.py、test_state.py、test_events.py、test_execution.py、test_configsvc.py、test_adapters.py、docs/architecture/adr/0001、0002
+- 修改 src/ak_auto/__main__.py（目录解析 + tasks 命令 + 事件订阅 + 控制器/Ctrl+C + 配置服务 + 适配器）、scheduler.py（ExecutionResult + 事件 + 取消）、config.py（schema_version）、report.py（run_id/error）、config/config.example.json（schema_version）
+- 未改动 device/runtime/pipeline（内部逻辑零重写，仅被适配器委托）
 
 
 测试与验证
 
 命令	结果	环境/备注
-python -m pytest -q	49 passed（15 旧 + 34 新）	Python 3.12.10 / pytest 9.1.1
+python -m pytest -q	56 passed（15 旧 + 41 新）	Python 3.12.10 / pytest 9.1.1
+python -m ak_auto doctor	资源三项（MANIFEST/OCR/模板图）经 AssetManager 检查 OK	游戏未运行时窗口项 FAIL 属预期
 python -m ak_auto tasks	正常列出 10 个任务（CJK 对齐）	—
 本地真实 config 经服务加载	schema_version 0→1 无损兼容，warning=None	—
-取消链路（FakeTasker）	正常完成/取消停止/事件/序列剩余取消/异常终态 全通	—
 真机验证	未做	post_stop 对真实任务的中断能力列入任务 8 真机对照（ADR-0002）
 
 
@@ -97,11 +100,11 @@ python -m ak_auto tasks	正常列出 10 个任务（CJK 对齐）	—
 
 1. 重新读取 AGENTS.md、SESSION_START.md、本文件与 docs/ROADMAP.md。
 2. git status / git log 确认本轮提交与工作区状态。
-3. 继续 Phase 1 任务 6：Adapters 收敛（最小包裹 device/runtime，不重写内部逻辑），先输出计划再动手。
+3. 继续 Phase 1 任务 7：为新核心补单元测试（Fake 控制器 / 录制截图回归），先输出计划再动手。
 
 
 阶段验收状态
 
 
 Phase 0：✅ 已人工验收（2026-10-13）
-Phase 1：进行中（5/8），按任务逐项自验 + 全部完成后人工验收
+Phase 1：进行中（6/8），按任务逐项自验 + 全部完成后人工验收

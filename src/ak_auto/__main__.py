@@ -36,7 +36,6 @@ def _callback() -> None:
 def doctor() -> None:
     """环境 / 资源 / 窗口 / 截图自检。"""
     from ak_auto import device
-    from ak_auto.config import PROJECT_ROOT
 
     checks: list[tuple[str, bool, str]] = []
 
@@ -53,14 +52,12 @@ def doctor() -> None:
         checks.append(("MaaFw 可导入", False, str(e)))
 
     # 资源
-    manifest = PROJECT_ROOT / "assets" / "MANIFEST.json"
-    ocr_dir = PROJECT_ROOT / "assets" / "resource" / "model" / "ocr"
-    img_dir = PROJECT_ROOT / "assets" / "resource" / "image"
-    ocr_ok = all((ocr_dir / f).is_file() for f in ("det.onnx", "rec.onnx", "keys.txt"))
-    img_ok = img_dir.is_dir() and any(img_dir.rglob("*.png"))
-    checks.append(("识别资源（MANIFEST）", manifest.is_file(), "存在" if manifest.is_file() else "缺失，请先 `fetch-assets`"))
-    checks.append(("OCR 模型", ocr_ok, "就绪" if ocr_ok else "缺失，请先 `fetch-assets`"))
-    checks.append(("模板图", img_ok, "就绪" if img_ok else "缺失，请先 `fetch-assets`"))
+    from ak_auto.infrastructure import AssetManager
+
+    am = AssetManager().status()
+    checks.append(("识别资源（MANIFEST）", am["manifest"], "存在" if am["manifest"] else "缺失，请先 `fetch-assets`"))
+    checks.append(("OCR 模型", am["ocr"], "就绪" if am["ocr"] else "缺失，请先 `fetch-assets`"))
+    checks.append(("模板图", am["images"], "就绪" if am["images"] else "缺失，请先 `fetch-assets`"))
 
     # 游戏
     cfg = _load_config()
@@ -177,7 +174,6 @@ def run(
 ) -> None:
     """连接游戏并运行指定任务。"""
     from ak_auto.domain import EventBus, ExecutionResult, ExecutionState, resolve_task
-    from ak_auto.runtime import build_tasker
 
     # 任务名解析：先查任务目录（支持中文名），查不到则按原始流水线节点名执行（兼容）
     td = resolve_task(task)
@@ -192,19 +188,17 @@ def run(
 
     device.init_maa()
     cfg = _load_config(config)
-    win = device.ensure_game_window(cfg, on_log=typer.echo)
-    if not win:
-        typer.echo("未找到游戏窗口，自动启动也没成功。请确认 config 的 startup.game_path，或手动打开游戏。")
+    from ak_auto.infrastructure import GameWindowAdapter, MaaFrameworkAdapter, WindowNotFound
+
+    win_adapter = GameWindowAdapter(cfg)
+    try:
+        _hwnd, ctrl = win_adapter.acquire(on_log=typer.echo)
+    except WindowNotFound as exc:
+        typer.echo(str(exc))
         raise typer.Exit(1)
 
     try:
-        sc = device.parse_screencap(cfg.device.screencap[0])
-        ctrl = device.connect_controller(
-            win["hwnd"], sc,
-            device.parse_input(cfg.device.mouse_input[0]),
-            device.parse_input(cfg.device.keyboard_input),
-        )
-        tasker = build_tasker(cfg, ctrl)
+        tasker = MaaFrameworkAdapter(cfg).build_tasker(ctrl)
         bus = EventBus()
         bus.subscribe_all(_event_console_logger(typer.echo))
         from ak_auto.application import ExecutionController
@@ -228,7 +222,7 @@ def run(
         code = 0 if result.ok else 1
     finally:
         # MaaFw 会把游戏窗口伪最小化，结束前务必还原
-        device.restore_window(win["hwnd"])
+        win_adapter.release(restore=True)
     raise typer.Exit(code)
 
 
@@ -238,7 +232,6 @@ def daily(config: str = typer.Option("", "--config", help="config.json 路径"))
     from ak_auto import device
     from ak_auto.domain import EventBus, resolve_task
     from ak_auto.report import make_report
-    from ak_auto.runtime import build_tasker
 
     device.init_maa()
     cfg = _load_config(config)
@@ -248,19 +241,17 @@ def daily(config: str = typer.Option("", "--config", help="config.json 路径"))
         if resolve_task(t) is None:
             typer.echo(f"[warn] runtime.task_order 里的 {t!r} 不在任务目录中，可能是无效任务")
 
-    win = device.ensure_game_window(cfg, on_log=typer.echo)
-    if not win:
-        typer.echo("未找到游戏窗口，自动启动也没成功。请确认 config 的 startup.game_path，或手动打开游戏。")
+    from ak_auto.infrastructure import GameWindowAdapter, MaaFrameworkAdapter, WindowNotFound
+
+    win_adapter = GameWindowAdapter(cfg)
+    try:
+        _hwnd, ctrl = win_adapter.acquire(on_log=typer.echo)
+    except WindowNotFound as exc:
+        typer.echo(str(exc))
         raise typer.Exit(1)
 
     try:
-        sc = device.parse_screencap(cfg.device.screencap[0])
-        ctrl = device.connect_controller(
-            win["hwnd"], sc,
-            device.parse_input(cfg.device.mouse_input[0]),
-            device.parse_input(cfg.device.keyboard_input),
-        )
-        tasker = build_tasker(cfg, ctrl)
+        tasker = MaaFrameworkAdapter(cfg).build_tasker(ctrl)
         bus = EventBus()
         bus.subscribe_all(_event_console_logger(typer.echo))
         from ak_auto.application import ExecutionController
@@ -285,7 +276,7 @@ def daily(config: str = typer.Option("", "--config", help="config.json 路径"))
         typer.echo(f"报告已保存：{report.save()}")
         code = 0 if report.all_ok else 1
     finally:
-        device.restore_window(win["hwnd"])
+        win_adapter.release(restore=True)
     raise typer.Exit(code)
 
 
