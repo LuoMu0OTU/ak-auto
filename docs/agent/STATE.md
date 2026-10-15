@@ -16,7 +16,7 @@ HEAD：297699b（Phase 1 完成提交；本轮提交号见 git log 最新一条�
 
 工作区状态：干净
 
-本轮获准任务：Phase 2（经人工授权）。第 1 轮完成：PySide6 依赖 + 最小窗口原型；后续轮次继续页面扩展/向导/gui 入口完善；推送已授权。
+本轮获准任务：Phase 2（经人工授权）。已完成第 1、2 轮（依赖+原型；任务中心勾选/预设/真实执行串联）；后续轮次继续设置读写/运行记录/向导；推送已授权。
 
 
 已完成
@@ -29,17 +29,20 @@ HEAD：297699b（Phase 1 完成提交；本轮提交号见 git log 最新一条�
   - __main__.py 新增 `gui` 命令。
   - 测试：tests/test_gui.py 4 例（offscreen 冒烟：主窗口/主题/任务页/Worker 类型）。
   - 真机验证：真实窗口启动（1024×680、深色主题、2 秒自动关闭退出码 0）——DPI/字体/线程三风险的首项目检通过。
+- Phase 2 第 2 轮：
+  - 任务中心：勾选（任务目录全量，默认每日常规）+ 三个推荐预设（每日常规/快速收菜/公招与信用）+ `_sequence()` 生成执行序列（非 StartUp 前插 ReturnToHome，与 CLI daily 一致）+「开始执行」。
+  - 首页：连接状态行（识别资源 + 游戏窗口，AssetManager/device 只读检查）；开始执行后自动切回首页看日志。
+  - 真机验证：GUI 点击「运行 StartUp」→ TaskWorker → 真实 ExecutionController → StartUp OK（3.6s），事件实时进日志窗，停止按钮状态正确，退出码 0。
 
 
 进行中 / 待办
 
 Phase 2 后续轮次：
-- 首页完善：连接状态（GameWindowAdapter.acquired / AssetManager 状态）、今日任务、最近结果（logs/ 读取）、开始/停止串联任务中心勾选。
-- 任务中心：勾选集合 → 生成执行序列（ReturnToHome 间隔），推荐预设（每日常规/快速收菜/公招与信用/自定义日常）。
-- 设置页：ConfigurationService 读写（关键项 + 恢复默认 + 风险提示）。
+- 设置页：ConfigurationService 读写（关键项编辑 + 恢复默认 + 风险提示 + 保存）。
 - 运行记录页：读 logs/run-*.json 展示。
+- 首页完善：今日任务、最近结果（logs/ 读取）。
 - 首次启动向导（环境检查/游戏路径/资源准备/配置验证/试运行）。
-- GUI 内运行的真实任务链路（真机验证：GUI 启动 StartUp → 停止）。
+- GUI 停止真实任务的链路真机验证（TaskWorker.stop → post_stop）。
 
 
 修改文件
@@ -50,10 +53,11 @@ Phase 2 后续轮次：
 测试与验证
 
 命令	结果	环境/备注
-python -m pytest -q	63 passed（15 旧 + 48 新）	Python 3.12.10 / pytest 9.1.1
+python -m pytest -q	65 passed（15 旧 + 50 新）	Python 3.12.10 / pytest 9.1.1
 python -m ak_auto --help	含 gui 命令	—
-真机 GUI 启动	窗口 1024x680 深色主题渲染正常，2s 自动关闭退出码 0	本机真实桌面
-GUI 内跑真实任务	未做	下一轮（任务中心勾选串联后）真机验证
+真机 GUI 启动	窗口 1024x680 深色主题渲染正常	本机真实桌面
+真机 GUI 内跑任务	「运行 StartUp」→ StartUp OK（3.6s），事件实时进日志窗，停止按钮状态正确	本机真实游戏
+GUI 内停止任务	未做	下一轮真机验证（TaskWorker.stop → post_stop）
 
 
 已知问题 / 风险 / 阻塞

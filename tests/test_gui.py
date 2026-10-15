@@ -50,6 +50,21 @@ def test_task_page_lists_catalog(qapp) -> None:
     assert len(page.checks) == 10  # 任务目录全量
 
 
+def test_sequence_interleaves_return_home() -> None:
+    from ak_auto.gui.main_window import _sequence
+
+    assert _sequence(["StartUp", "Infrast"]) == ["StartUp", "ReturnToHome", "Infrast"]
+    assert _sequence(["Infrast"]) == ["ReturnToHome", "Infrast"]
+
+
+def test_task_page_preset_and_selection(qapp) -> None:
+    from ak_auto.gui.main_window import PRESETS, TaskPage
+
+    page = TaskPage()
+    page.apply_preset(PRESETS["快速收菜"])
+    assert page.selected_entries() == ["ReturnToHome", "Infrast"]
+
+
 def test_worker_is_qthread() -> None:
     from PySide6.QtCore import QThread
 
