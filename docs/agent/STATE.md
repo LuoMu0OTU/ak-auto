@@ -8,11 +8,11 @@ Agent 可恢复工作状态
 
 更新日期：2026-10-13
 
-当前阶段：Phase 1 核心解耦（进行中，任务 3/8 完成）
+当前阶段：Phase 1 核心解耦（进行中，任务 4/8 完成）
 
 当前分支：main
 
-HEAD：6a57189（本轮任务 3 提交前基线；任务 3 提交号见 git log 最新一条）
+HEAD：2cf3796（本轮任务 4 提交前基线；任务 4 提交号见 git log 最新一条）
 
 工作区状态：干净（原未提交的 infrast.json 已按负责人授权提交并推送）
 
@@ -37,12 +37,17 @@ HEAD：6a57189（本轮任务 3 提交前基线；任务 3 提交号见 git log 
   - scheduler.py：run_task/run_sequence 增加 bus 参数；run_task 发 TaskStarted + TaskCompleted/TaskFailed；run_sequence 发 TaskProgress（重试提示）。
   - __main__.py：run/daily 订阅总线并在控制台输出事件（▶开始/✔完成/✘失败；TaskProgress 由 on_progress 负责不重复打印）。
   - 测试：tests/test_events.py 9 例（订阅/全订阅/异常隔离/调度器事件/序列进度/缺失节点），内含 FakeTasker（任务 7 Fake 控制器的种子）。
+- Phase 1 任务 4 —— ExecutionController 协作式取消：
+  - 评估结论：MaaFw `Tasker.post_stop()` 存在（v5.14.3），`Job.done` 可轮询 → 见 ADR-0002。
+  - scheduler.py 重构出 `_run_entry`（无取消事件时与旧阻塞 wait 等价；有则轮询 + STOPPING→post_stop→CANCELLED）；run_sequence 支持 cancel_event（剩余任务记 CANCELLED）。
+  - 新增 src/ak_auto/application/execution.py：ExecutionController（daemon 线程、cancel/wait、控制面终态规则、worker 异常也落 FAILED）。
+  - __main__.py：run/daily 改用控制器；**Ctrl+C 从杀进程升级为优雅停止**（cancel + 有限等待 + 窗口还原兜底）。
+  - ADR-0002（取消方案）+ 测试 tests/test_execution.py 6 例（正常完成/取消停止/取消事件/序列剩余取消/重复 start/异常终态）。
 
 
 进行中 / 待办
 
-Phase 1 剩余五项（按 docs/ROADMAP.md 拆解顺序）：
-4. ExecutionController 协作式取消（评估 Tasker.post_stop，不可用则记录降级方案）；
+Phase 1 剩余四项（按 docs/ROADMAP.md 拆解顺序）：
 5. ConfigurationService：schema_version/原子写/备份/损坏恢复/迁移框架（保持 config.json 兼容）；
 6. Adapters 收敛（最小）：MaaFrameworkAdapter / GameWindowAdapter / AssetManager；
 7. 为新核心补单元测试（Fake 控制器 + 录制截图）；
@@ -51,19 +56,18 @@ Phase 1 剩余五项（按 docs/ROADMAP.md 拆解顺序）：
 
 修改文件
 
-- 新增 src/ak_auto/domain/__init__.py、domain/taskdef.py、domain/state.py、domain/events.py、tests/test_taskdef.py、tests/test_state.py、tests/test_events.py
-- 修改 src/ak_auto/__main__.py（目录解析 + tasks 命令 + 事件订阅）、scheduler.py（ExecutionResult + 事件）、report.py（run_id/error）
+- 新增 src/ak_auto/domain/*（taskdef/state/events）、src/ak_auto/application/*（execution）、tests/test_taskdef.py、test_state.py、test_events.py、test_execution.py、docs/architecture/adr/0001、0002
+- 修改 src/ak_auto/__main__.py（目录解析 + tasks 命令 + 事件订阅 + 控制器/Ctrl+C）、scheduler.py（ExecutionResult + 事件 + 取消）、report.py（run_id/error）
 - 未改动 device/runtime/pipeline（任务执行与设备逻辑零变化）
 
 
 测试与验证
 
 命令	结果	环境/备注
-python -m pytest -q	36 passed（15 旧 + 21 新）	Python 3.12.10 / pytest 9.1.1
+python -m pytest -q	42 passed（15 旧 + 27 新）	Python 3.12.10 / pytest 9.1.1
 python -m ak_auto tasks	正常列出 10 个任务（CJK 对齐）	—
-report.render() 兼容	OK (succeeded) / FAIL (missing-node) 格式与旧版一致	—
-事件总线	FakeTasker 下 started/completed/failed/progress 事件链路全通	—
-真机验证	未做	本轮无运行行为改动，无需真机
+取消链路（FakeTasker）	正常完成/取消停止/事件/序列剩余取消/异常终态 全通	—
+真机验证	未做	post_stop 对真实任务的中断能力列入任务 8 真机对照（ADR-0002 待真机验证项）
 
 
 已知问题 / 风险 / 阻塞
@@ -88,11 +92,11 @@ report.render() 兼容	OK (succeeded) / FAIL (missing-node) 格式与旧版一�
 
 1. 重新读取 AGENTS.md、SESSION_START.md、本文件与 docs/ROADMAP.md。
 2. git status / git log 确认本轮提交与工作区状态。
-3. 继续 Phase 1 任务 4：ExecutionController 协作式取消（先评估 Tasker.post_stop 可用性并记录 ADR），先输出计划再动手。
+3. 继续 Phase 1 任务 5：ConfigurationService（schema_version/原子写/备份/损坏恢复/迁移，保持 config.json 兼容），先输出计划再动手。
 
 
 阶段验收状态
 
 
 Phase 0：✅ 已人工验收（2026-10-13）
-Phase 1：进行中（3/8），按任务逐项自验 + 全部完成后人工验收
+Phase 1：进行中（4/8），按任务逐项自验 + 全部完成后人工验收

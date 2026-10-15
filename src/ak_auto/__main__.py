@@ -165,11 +165,8 @@ def run(
     config: str = typer.Option("", "--config", help="config.json 路径"),
 ) -> None:
     """连接游戏并运行指定任务。"""
-    from ak_auto import device
-    from ak_auto.config import AppConfig
-    from ak_auto.domain import EventBus, resolve_task
+    from ak_auto.domain import EventBus, ExecutionResult, ExecutionState, resolve_task
     from ak_auto.runtime import build_tasker
-    from ak_auto.scheduler import run_task
 
     # 任务名解析：先查任务目录（支持中文名），查不到则按原始流水线节点名执行（兼容）
     td = resolve_task(task)
@@ -199,7 +196,21 @@ def run(
         tasker = build_tasker(cfg, ctrl)
         bus = EventBus()
         bus.subscribe_all(_event_console_logger(typer.echo))
-        result = run_task(tasker, entry, bus=bus)
+        from ak_auto.application import ExecutionController
+
+        controller = ExecutionController(tasker, bus=bus)
+        controller.start([entry], retry_per_task=0)
+        try:
+            results = controller.wait()
+        except KeyboardInterrupt:
+            typer.echo("\n[stop] 收到 Ctrl+C，正在安全停止 ...")
+            controller.cancel()
+            results = controller.wait(timeout=10.0)
+        result = (
+            results[0]
+            if results
+            else ExecutionResult(run_id="", task_id=entry, state=ExecutionState.FAILED, error="no-result")
+        )
         typer.echo(result.summary)
         for n in result.nodes:
             typer.echo(f"  - {n}")
@@ -218,7 +229,6 @@ def daily(config: str = typer.Option("", "--config", help="config.json 路径"))
     from ak_auto.domain import EventBus, resolve_task
     from ak_auto.report import make_report
     from ak_auto.runtime import build_tasker
-    from ak_auto.scheduler import run_sequence
 
     device.init_maa()
     cfg = AppConfig.load(config or None)
@@ -243,19 +253,23 @@ def daily(config: str = typer.Option("", "--config", help="config.json 路径"))
         tasker = build_tasker(cfg, ctrl)
         bus = EventBus()
         bus.subscribe_all(_event_console_logger(typer.echo))
+        from ak_auto.application import ExecutionController
+
         # 每个任务前先回主界面，保证任务之间不串场
         entries: list[str] = []
         for t in cfg.runtime.task_order:
             if t != "StartUp":
                 entries.append("ReturnToHome")
             entries.append(t)
-        results = run_sequence(
-            tasker,
-            entries,
-            cfg.runtime.retry_per_task,
-            on_progress=typer.echo,
-            bus=bus,
-        )
+
+        controller = ExecutionController(tasker, bus=bus)
+        controller.start(entries, retry_per_task=cfg.runtime.retry_per_task, on_progress=typer.echo)
+        try:
+            results = controller.wait()
+        except KeyboardInterrupt:
+            typer.echo("\n[stop] 收到 Ctrl+C，正在安全停止 ...")
+            controller.cancel()
+            results = controller.wait(timeout=10.0)
         report = make_report(results)
         typer.echo("\n" + report.render())
         typer.echo(f"报告已保存：{report.save()}")
