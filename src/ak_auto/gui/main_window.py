@@ -19,7 +19,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ..application import ConfigurationService
 from ..domain import all_tasks
+from .pages import RunLogPage, SettingsPage
 from .worker import TaskWorker
 
 NAV_ITEMS = ["首页", "任务中心", "运行记录", "设置"]
@@ -149,40 +151,11 @@ class TaskPage(QWidget):
             self.run_requested.emit(entries)
 
 
-class RunLogPage(QWidget):
-    def __init__(self, parent=None) -> None:
-        super().__init__(parent)
-        title = QLabel("运行记录")
-        title.setObjectName("title")
-        hint = QLabel("历史运行记录（后续轮次接入 logs/ 读取）")
-        hint.setObjectName("muted")
-        lay = QVBoxLayout(self)
-        lay.addWidget(title)
-        lay.addWidget(hint)
-        lay.addStretch(1)
-
-
-class SettingsPage(QWidget):
-    def __init__(self, cfg, parent=None) -> None:
-        super().__init__(parent)
-        title = QLabel("设置")
-        title.setObjectName("title")
-        info = QLabel(
-            f"配置文件：config/config.json（schema_version={cfg.schema_version}）\n"
-            f"游戏路径：{cfg.startup.game_path}\n\n"
-            "设置编辑界面后续轮次接入（ConfigurationService 已就绪）。"
-        )
-        info.setObjectName("muted")
-        lay = QVBoxLayout(self)
-        lay.addWidget(title)
-        lay.addWidget(info)
-        lay.addStretch(1)
-
-
 class MainWindow(QMainWindow):
     def __init__(self, cfg) -> None:
         super().__init__()
         self.cfg = cfg
+        self.svc = ConfigurationService()
         self.worker: TaskWorker | None = None
         self.setWindowTitle("ak-auto — 明日方舟本地自动化助手")
         self.resize(1024, 680)
@@ -193,11 +166,12 @@ class MainWindow(QMainWindow):
 
         self.home = HomePage(cfg)
         self.task_page = TaskPage()
+        self.runlog = RunLogPage()
         self.pages = QStackedWidget()
         self.pages.addWidget(self.home)
         self.pages.addWidget(self.task_page)
-        self.pages.addWidget(RunLogPage())
-        self.pages.addWidget(SettingsPage(cfg))
+        self.pages.addWidget(self.runlog)
+        self.pages.addWidget(SettingsPage(cfg, self.svc))
 
         self.home.run_requested.connect(self._start)
         self.home.stop_requested.connect(self._stop)
@@ -242,6 +216,7 @@ class MainWindow(QMainWindow):
     def _on_finished(self) -> None:
         self.home.set_running(False)
         self.statusBar().showMessage("就绪")
+        self.runlog.refresh()
 
     def _log(self, text: str) -> None:
         self.home.append_log(text)

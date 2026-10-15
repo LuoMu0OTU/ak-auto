@@ -44,7 +44,14 @@ class TaskWorker(QThread):
                     self.log.emit("[gui] 收到停止请求，正在安全停止 ...")
                     controller.cancel()
                 time.sleep(0.1)
-            self.done.emit(controller.wait(timeout=0))
+            results = controller.wait(timeout=0)
+            try:
+                from ..report import make_report
+
+                make_report(results).save()
+            except Exception:  # noqa: BLE001 —— 报告失败不影响运行结果
+                pass
+            self.done.emit(results)
         except Exception as exc:  # noqa: BLE001 —— 错误也回传 UI，不留静默失败
             self.failed.emit(str(exc))
         finally:

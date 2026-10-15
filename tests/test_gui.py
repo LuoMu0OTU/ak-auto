@@ -21,6 +21,16 @@ def qapp():
 
     app = QApplication.instance() or QApplication([])
     yield app
+    app.processEvents()
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _qt_cleanup(qapp):
+    """模块结束时清理残留控件，避免 Qt/MaaFw C++ teardown 冲突。"""
+    yield
+    for w in qapp.topLevelWidgets():
+        w.deleteLater()
+    qapp.processEvents()
 
 
 def test_main_window_constructs(qapp) -> None:
@@ -71,3 +81,43 @@ def test_worker_is_qthread() -> None:
     from ak_auto.gui.worker import TaskWorker
 
     assert issubclass(TaskWorker, QThread)
+
+
+def test_settings_page_save(tmp_path, qapp) -> None:
+    from ak_auto.application import ConfigurationService
+    from ak_auto.gui.pages import SettingsPage
+
+    svc = ConfigurationService(tmp_path / "c.json")
+    cfg = svc.load()
+    page = SettingsPage(cfg, svc)
+    page.game_path.setText(r"C:\Games\Arknights.exe")
+    page._save()
+
+    loaded = svc.load()
+    assert loaded.startup.game_path == r"C:\Games\Arknights.exe"
+    assert (tmp_path / "c.json").exists()
+
+
+def test_runlog_page_reads_reports(tmp_path, qapp, monkeypatch) -> None:
+    import json
+
+    from ak_auto.gui import pages as pages_mod
+
+    logs = tmp_path / "logs"
+    logs.mkdir()
+    (logs / "run-x.json").write_text(
+        json.dumps(
+            {
+                "started_at": "2026-10-13T00:00:00",
+                "all_ok": True,
+                "total_ms": 1000,
+                "tasks": [{"entry": "StartUp", "ok": True, "status": "succeeded",
+                           "duration_ms": 1000, "nodes": ["StartUp"], "run_id": "r", "error": ""}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(pages_mod, "PROJECT_ROOT", tmp_path)
+    page = pages_mod.RunLogPage()
+    assert page.list.count() == 1
+    assert "StartUp" in page.detail.toPlainText()

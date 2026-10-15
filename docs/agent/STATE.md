@@ -16,7 +16,7 @@ HEAD：297699b（Phase 1 完成提交；本轮提交号见 git log 最新一条�
 
 工作区状态：干净
 
-本轮获准任务：Phase 2（经人工授权）。已完成第 1、2 轮（依赖+原型；任务中心勾选/预设/真实执行串联）；后续轮次继续设置读写/运行记录/向导；推送已授权。
+本轮获准任务：Phase 2（经人工授权）。已完成第 1–3 轮（依赖+原型；任务中心+真实执行；设置读写+运行记录）；后续轮次继续首页完善/向导/GUI 停止真机验证；推送已授权。
 
 
 已完成
@@ -33,14 +33,16 @@ HEAD：297699b（Phase 1 完成提交；本轮提交号见 git log 最新一条�
   - 任务中心：勾选（任务目录全量，默认每日常规）+ 三个推荐预设（每日常规/快速收菜/公招与信用）+ `_sequence()` 生成执行序列（非 StartUp 前插 ReturnToHome，与 CLI daily 一致）+「开始执行」。
   - 首页：连接状态行（识别资源 + 游戏窗口，AssetManager/device 只读检查）；开始执行后自动切回首页看日志。
   - 真机验证：GUI 点击「运行 StartUp」→ TaskWorker → 真实 ExecutionController → StartUp OK（3.6s），事件实时进日志窗，停止按钮状态正确，退出码 0。
+- Phase 2 第 3 轮：
+  - 新增 src/ak_auto/gui/pages.py：SettingsPage（游戏路径/关卡/次数/用药/碎石/重试 编辑 + 保存（ConfigurationService 原子写）+ 恢复默认 + 付费资源风险提示）、RunLogPage（读 logs/run-*.json 列表 + 详情渲染）。
+  - worker.py：任务结束自动保存运行报告（logs/run-*.json），运行记录页随之刷新。
+  - 修复：Qt offscreen 与 MaaFw 同进程的解释器退出崩溃（0xC0000409）——模块级清理 fixture（deleteLater + processEvents），全套 67 例 exit=0。
 
 
 进行中 / 待办
 
 Phase 2 后续轮次：
-- 设置页：ConfigurationService 读写（关键项编辑 + 恢复默认 + 风险提示 + 保存）。
-- 运行记录页：读 logs/run-*.json 展示。
-- 首页完善：今日任务、最近结果（logs/ 读取）。
+- 首页完善：今日任务、最近结果（logs/ 读取展示）。
 - 首次启动向导（环境检查/游戏路径/资源准备/配置验证/试运行）。
 - GUI 停止真实任务的链路真机验证（TaskWorker.stop → post_stop）。
 
@@ -53,10 +55,10 @@ Phase 2 后续轮次：
 测试与验证
 
 命令	结果	环境/备注
-python -m pytest -q	65 passed（15 旧 + 50 新）	Python 3.12.10 / pytest 9.1.1
+python -m pytest -q	67 passed，exit=0（已修 Qt/MaaFw 退出崩溃）	Python 3.12.10 / pytest 9.1.1
 python -m ak_auto --help	含 gui 命令	—
 真机 GUI 启动	窗口 1024x680 深色主题渲染正常	本机真实桌面
-真机 GUI 内跑任务	「运行 StartUp」→ StartUp OK（3.6s），事件实时进日志窗，停止按钮状态正确	本机真实游戏
+真机 GUI 内跑任务	「运行 StartUp」→ StartUp OK（3.6s），事件实时进日志窗	本机真实游戏
 GUI 内停止任务	未做	下一轮真机验证（TaskWorker.stop → post_stop）
 
 
