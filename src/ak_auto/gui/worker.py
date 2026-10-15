@@ -10,22 +10,25 @@ import time
 from PySide6.QtCore import QThread, Signal
 
 from ..application import ExecutionController
-from ..domain import EventBus
+from ..domain import EventBus, EventType, ExecutionState
 from ..infrastructure import GameWindowAdapter, MaaFrameworkAdapter
 
 
 class TaskWorker(QThread):
     """后台线程执行任务序列（经 Application 层，不直接碰识别/点击）。"""
 
-    log = Signal(str)       # 日志 / 事件文本
-    done = Signal(object)   # list[ExecutionResult]
-    failed = Signal(str)    # 装配失败信息
+    log = Signal(str)            # 日志 / 事件文本
+    done = Signal(object)        # list[ExecutionResult]
+    failed = Signal(str)         # 装配失败信息
+    task_state = Signal(str, str)  # (task_id, 状态值)：当前任务与状态机状态
+    seq_progress = Signal(int, int)  # (已结束任务数, 序列总数)
 
     def __init__(self, cfg, entries, parent=None) -> None:
         super().__init__(parent)
         self.cfg = cfg
         self.entries = list(entries)
         self._stop = threading.Event()
+        self._finished_count = 0
 
     def run(self) -> None:  # noqa: D102 —— QThread 入口
         from .. import device
@@ -58,6 +61,12 @@ class TaskWorker(QThread):
             win_adapter.release(restore=True)
 
     def _on_event(self, e) -> None:
+        if e.type is EventType.TASK_STARTED:
+            self.task_state.emit(e.task_id, ExecutionState.RUNNING.value)
+        elif e.type in (EventType.TASK_COMPLETED, EventType.TASK_FAILED, EventType.TASK_CANCELLED):
+            self.task_state.emit(e.task_id, e.state.value)
+            self._finished_count += 1
+            self.seq_progress.emit(self._finished_count, len(self.entries))
         self.log.emit(f"{e.type.value} {e.task_id} {e.message}".strip())
 
     def stop(self) -> None:

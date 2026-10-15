@@ -132,3 +132,28 @@ def test_wizard_constructs(qapp, tmp_path) -> None:
     assert len(wiz.pageIds()) == 5
     assert wiz.windowTitle() == "ak-auto 首次启动向导"
     wiz.close()
+
+
+def test_home_run_state_updates(qapp) -> None:
+    from ak_auto.gui.main_window import HomePage
+
+    page = HomePage(AppConfig())
+    page.begin_run(5)
+    assert not page.progress.isHidden() and "准备中" in page.run_state.text()
+
+    page.set_task_state("Infrast", "running")
+    assert "Infrast — running" in page.run_state.text()
+
+    page.set_progress(2, 5)
+    assert page.progress.value() == 2
+
+    page.finish_run("3/5 成功")
+    assert "已结束" in page.run_state.text()
+    assert page.progress.isHidden()
+
+
+def test_worker_has_state_signals() -> None:
+    from ak_auto.gui.worker import TaskWorker
+
+    for name in ("task_state", "seq_progress", "log", "done", "failed"):
+        assert hasattr(TaskWorker, name), f"缺信号 {name}"

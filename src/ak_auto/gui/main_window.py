@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QListWidget,
     QMainWindow,
     QPlainTextEdit,
+    QProgressBar,
     QPushButton,
     QStackedWidget,
     QVBoxLayout,
@@ -59,6 +60,11 @@ class HomePage(QWidget):
         self.status_label.setObjectName("muted")
         self.last_label = QLabel(self._last_run_text())
         self.last_label.setObjectName("muted")
+        self.run_state = QLabel("运行状态：空闲")
+        self.progress = QProgressBar()
+        self.progress.setRange(0, 1)
+        self.progress.setValue(0)
+        self.progress.setVisible(False)
 
         self.start_btn = QPushButton("运行 StartUp（快速启动）")
         self.start_btn.setObjectName("primary")
@@ -77,8 +83,28 @@ class HomePage(QWidget):
         lay.addWidget(title)
         lay.addWidget(self.status_label)
         lay.addWidget(self.last_label)
+        lay.addWidget(self.run_state)
+        lay.addWidget(self.progress)
         lay.addLayout(row)
         lay.addWidget(self.log_view, 1)
+
+    # ---- 运行状态区（TaskWorker 信号驱动）----
+    def begin_run(self, total: int) -> None:
+        self.progress.setRange(0, max(1, total))
+        self.progress.setValue(0)
+        self.progress.setVisible(True)
+        self.run_state.setText("运行状态：准备中 ...")
+
+    def set_task_state(self, task_id: str, state: str) -> None:
+        self.run_state.setText(f"运行状态：{task_id} — {state}")
+
+    def set_progress(self, done: int, total: int) -> None:
+        self.progress.setRange(0, max(1, total))
+        self.progress.setValue(done)
+
+    def finish_run(self, summary: str) -> None:
+        self.run_state.setText(f"运行状态：已结束（{summary}）")
+        self.progress.setVisible(False)
 
     @staticmethod
     def _last_run_text() -> str:
@@ -225,8 +251,11 @@ class MainWindow(QMainWindow):
         self.worker.done.connect(self._on_done)
         self.worker.failed.connect(lambda msg: self._log(f"[gui] 失败：{msg}"))
         self.worker.finished.connect(self._on_finished)
+        self.worker.task_state.connect(self.home.set_task_state)
+        self.worker.seq_progress.connect(self.home.set_progress)
         self.worker.start()
         self.home.set_running(True)
+        self.home.begin_run(len(entries))
         self.statusBar().showMessage("运行中 ...")
 
     def _start_and_show_log(self, entries: list[str]) -> None:
@@ -240,6 +269,8 @@ class MainWindow(QMainWindow):
     def _on_done(self, results) -> None:
         for r in results:
             self._log(r.summary)
+        ok_n = sum(1 for r in results if r.ok)
+        self.home.finish_run(f"{ok_n}/{len(results)} 成功")
 
     def _on_finished(self) -> None:
         self.home.set_running(False)

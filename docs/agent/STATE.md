@@ -23,10 +23,12 @@ HEAD：151f59d（双击启动崩溃修复提交）
 
 - Phase 0：完整审计 + 测试基线 + 架构设计 + 路线图，已人工验收。
 - Phase 1：八项全部完成并已人工验收。细节见 CHANGELOG.md 与 git 历史。
-- 修复（用户报告：双击启动脚本崩溃）：
-  - 根因 1：`launch_game` 的 `Popen` 抛异常未捕获（游戏清单 requireAdministrator → 普通权限 CreateProcess 报 740）→ daily 直接崩出 traceback。已改为捕获 PermissionError/OSError 并播报具体原因与处理建议（提权运行或手动开游戏），返回 False 走干净错误路径。
-  - 根因 2：DSH/开发 shell 是管理员权限，掩盖了「普通用户双击无法拉起游戏」的问题。已给会拉起游戏的三个启动器加自动提权头（whoami 检查 High Mandatory Level → 非提权时 PowerShell Start-Process -Verb RunAs 弹一次 UAC），并新增「启动界面.bat」。
-  - 测试：tests/test_device_launch.py 4 例（路径缺失/权限不足/OSError/正常启动）；README 更新说明 UAC 与四个脚本。
+- 修复（用户报告：双击启动脚本崩溃）：launch_game 捕获启动异常（游戏清单 requireAdministrator，普通权限报 740）+ 三个启动器自动提权 + 新增「启动界面.bat」。测试 tests/test_device_launch.py 4 例。
+- Phase 3 第 1 项 —— GUI 首页状态区：
+  - worker.py：新增 task_state(task_id, 状态值) 与 seq_progress(已完成, 总数) 信号（由事件总线驱动，跨线程安全）。
+  - 首页：运行状态标签（当前任务 — 状态机状态）+ 序列进度条；开始→准备中，结束→「已结束（k/n 成功）」。
+  - 真机验证：跑 StartUp 时状态区「准备中…」+ 进度条可见，结束「已结束（1/1 成功）」。
+  - 测试：tests/test_gui.py 新增 2 例（状态区流转 / worker 信号齐全），全套 74 例 exit=0。
 - Phase 2 第 1 轮：
   - PySide6 6.12.0 加入 requirements/pyproject；NOTICE 增加 PySide6 LGPL 声明。
   - 新增 src/ak_auto/gui/：theme.py（深色设计令牌 + QSS + QPalette）、worker.py（TaskWorker(QThread) 桥接 ExecutionController：事件/结果经 Qt 信号回传、stop() 协作取消、finally 还原窗口）、main_window.py（侧边导航 + 四页面：首页（运行 StartUp/停止 + 日志窗）、任务中心（任务目录勾选展示）、运行记录、设置占位）、app.py（run_gui 入口）。
