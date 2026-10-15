@@ -95,7 +95,11 @@ class RuntimeConfig(BaseModel):
     screenshot_on_error: bool = True
 
 
+CONFIG_SCHEMA_VERSION = 1  # 当前配置 Schema 版本（ConfigurationService 负责迁移）
+
+
 class AppConfig(BaseModel):
+    schema_version: int = CONFIG_SCHEMA_VERSION
     device: DeviceConfig = Field(default_factory=DeviceConfig)
     startup: StartupConfig = Field(default_factory=StartupConfig)
     fight: FightConfig = Field(default_factory=FightConfig)

@@ -1,4 +1,5 @@
 {
+  "schema_version": 1,
   "device": {
     "kind": "win32",
     "window_match": { "class_name": "", "title_contains": "明日方舟", "process_name": "Arknights" },

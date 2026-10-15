@@ -36,7 +36,7 @@ def _callback() -> None:
 def doctor() -> None:
     """环境 / 资源 / 窗口 / 截图自检。"""
     from ak_auto import device
-    from ak_auto.config import AppConfig, PROJECT_ROOT
+    from ak_auto.config import PROJECT_ROOT
 
     checks: list[tuple[str, bool, str]] = []
 
@@ -63,7 +63,7 @@ def doctor() -> None:
     checks.append(("模板图", img_ok, "就绪" if img_ok else "缺失，请先 `fetch-assets`"))
 
     # 游戏
-    cfg = AppConfig.load()
+    cfg = _load_config()
     import os
     game = cfg.startup.game_path
     checks.append(("游戏路径存在", os.path.isfile(game), game))
@@ -95,10 +95,10 @@ def probe(
     import json
 
     from ak_auto import device
-    from ak_auto.config import AppConfig, PROJECT_ROOT
+    from ak_auto.config import PROJECT_ROOT
 
     device.init_maa()
-    cfg = AppConfig.load()
+    cfg = _load_config()
 
     if list_only:
         for w in device.list_windows():
@@ -137,6 +137,17 @@ def fetch_assets(tag: str = typer.Option("v6.19.0", help="MAA 发版 tag")) -> N
 
     script = PROJECT_ROOT / "tools" / "fetch_maa_assets.py"
     raise typer.Exit(subprocess.run([sys.executable, str(script), "--tag", tag]).returncode)
+
+
+def _load_config(path: str = ""):
+    """经 ConfigurationService 读配置（损坏恢复 + 迁移），有警告则提示。"""
+    from ak_auto.application import ConfigurationService
+
+    svc = ConfigurationService(path or None)
+    cfg = svc.load()
+    if svc.warning:
+        typer.echo(f"[warn] {svc.warning}")
+    return cfg
 
 
 def _event_console_logger(echo):
@@ -180,7 +191,7 @@ def run(
         typer.echo(f"[task] 未登记任务，按原始流水线节点名执行：{entry}")
 
     device.init_maa()
-    cfg = AppConfig.load(config or None)
+    cfg = _load_config(config)
     win = device.ensure_game_window(cfg, on_log=typer.echo)
     if not win:
         typer.echo("未找到游戏窗口，自动启动也没成功。请确认 config 的 startup.game_path，或手动打开游戏。")
@@ -225,13 +236,12 @@ def run(
 def daily(config: str = typer.Option("", "--config", help="config.json 路径")) -> None:
     """日常全家桶。"""
     from ak_auto import device
-    from ak_auto.config import AppConfig
     from ak_auto.domain import EventBus, resolve_task
     from ak_auto.report import make_report
     from ak_auto.runtime import build_tasker
 
     device.init_maa()
-    cfg = AppConfig.load(config or None)
+    cfg = _load_config(config)
 
     # 校验 task_order：不在任务目录里的项给出警告（是否真的执行由流水线节点是否存在决定）
     for t in cfg.runtime.task_order:
@@ -299,10 +309,9 @@ def tasks() -> None:
 def restore() -> None:
     """还原被 MaaFw 伪最小化的游戏窗口（窗口「打不开」时用）。"""
     from ak_auto import device
-    from ak_auto.config import AppConfig
 
     device.init_maa()
-    cfg = AppConfig.load()
+    cfg = _load_config()
     win = device.find_game_window(cfg)
     if not win:
         typer.echo("没找到游戏窗口（进程没在跑？）")
