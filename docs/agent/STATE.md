@@ -8,11 +8,11 @@ Agent 可恢复工作状态
 
 更新日期：2026-10-13
 
-当前阶段：Phase 3 核心集成（进行中，起步：GUI 状态区 + 逐项真机验收）
+当前阶段：Phase 3 核心集成（全部完成，待人工验收）
 
 当前分支：main
 
-HEAD：151f59d（双击启动崩溃修复提交）
+HEAD：c11fb97（第 1 项提交；本轮提交号见 git log 最新一条）
 
 工作区状态：干净
 
@@ -52,13 +52,8 @@ HEAD：151f59d（双击启动崩溃修复提交）
 
 进行中 / 待办
 
-Phase 3 核心集成（按 ROADMAP 与 AGENTS.md 第 8 节）：
-1. GUI 首页状态区：当前任务 / 状态机状态 / 序列进度（TaskWorker 事件驱动），失败原因可见 —— 本轮做。
-2. 逐项真机验收矩阵：10 个任务在真实游戏上逐个跑（GUI 与 CLI 共享核心，GUI 侧重点验证状态展示/停止/异常/配置生效）。
-3. 停止验收：每个可长跑任务（Fight 战斗等待、Infrast、AwardVisit）中途停止 → CANCELLED → 窗口还原。
-4. 异常验收：失败任务（如缺失节点）在 GUI 内正确呈现 FAIL + 原因，不崩溃。
-5. 配置生效验收：设置页改关卡/次数 → GUI 运行使用新值。
-6. 全部完成后提交 Phase 3 验收报告，等人工验收。
+- 等人工验收 Phase 3（验收报告：docs/architecture/PHASE3_ACCEPTANCE.md）。
+- 验收通过后：Phase 4 高级模式（完整参数、预设管理、排序、诊断；两种模式共享核心）。
 
 
 修改文件
@@ -69,11 +64,11 @@ Phase 3 核心集成（按 ROADMAP 与 AGENTS.md 第 8 节）：
 测试与验证
 
 命令	结果	环境/备注
-python -m pytest -q	72 passed，exit=0	Python 3.12.10 / pytest 9.1.1
-坏路径 daily 失败路径	三条干净提示（路径不存在/启动失败/窗口未找到），无 traceback	本机
-游戏清单核实	Arknights.exe 内嵌 requireAdministrator → 双击需 UAC，启动器已自动提权	—
-提权头逻辑	whoami 检查 High Mandatory Level 在本机验证通过	本机
-真机 GUI 启动/跑任务/停止	见 Phase 2 各轮记录	本机真实游戏
+python -m pytest -q	77 passed，exit=0（新增：重试链路 3 例、状态区 2 例）	Python 3.12.10 / pytest 9.1.1
+逐项验收矩阵	9/10 任务 OK；Fight 已知失败（P1）	本机真实游戏，详见 docs/architecture/PHASE3_ACCEPTANCE.md
+GUI 完整日常	16/17 成功，状态区「已结束（16/17 成功）」，失败原因可见	本机真实游戏
+缺失节点异常	GhostTask → FAIL (missing-node)，exit 1，无崩溃	本机
+配置生效	真机：task_order 被采纳；单测：设置往返 + retry 链路；fight.stage 未生效（Fight P1 缺陷）	—
 
 
 已知问题 / 风险 / 阻塞
@@ -99,7 +94,7 @@ python -m pytest -q	72 passed，exit=0	Python 3.12.10 / pytest 9.1.1
 下一轮第一步
 
 1. 重新读取 AGENTS.md、SESSION_START.md、本文件与 docs/ROADMAP.md。
-2. 继续 Phase 3 第 1 项：GUI 首页状态区（当前任务/状态/进度）+ 测试，先输出计划再动手。
+2. 若 Phase 3 已人工验收：进入 Phase 4 高级模式（完整参数、预设管理、排序、诊断；共享核心，先输出计划再动手）。
 
 
 阶段验收状态
@@ -108,4 +103,4 @@ python -m pytest -q	72 passed，exit=0	Python 3.12.10 / pytest 9.1.1
 Phase 0：✅ 已人工验收（2026-10-13）
 Phase 1：✅ 已人工验收（2026-10-13）
 Phase 2：✅ 已人工验收（2026-10-13）
-Phase 3：进行中（起步）
+Phase 3：全部完成 + 77 测试全绿 + 真机验收报告（PHASE3_ACCEPTANCE.md）—— 待人工验收
