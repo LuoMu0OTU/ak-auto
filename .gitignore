@@ -9,6 +9,9 @@ dist/
 
 # 本机私有配置与运行产物
 config/config.json
+config/config.json.*.bak
+config/config.json.tmp
+config/_*.json
 logs/
 debug/
 
