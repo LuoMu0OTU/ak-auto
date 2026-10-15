@@ -11,7 +11,7 @@
 | 2 | 公招策略（tag_priority） | ✅ 完成 | 见下 |
 | 3 | 基建换班（shift_presets） | ⏳ 未完成 | 见下 |
 | 4 | 运行统计 | ✅ 完成 | 见下 |
-| 5 | 截图回归 | 🔶 框架已建 | Phase 1 已建（fixture + bright_rows 回归）；扩展采集待安全时机 |
+| 5 | 截图回归 | ✅ 完成（结构回归防线） | 见下 |
 | 6 | 自定义排序/预设管理/信用优先级 | ✅ 已在 Phase 4 完成 | mall.buy_first 既有；排序与预设管理 Phase 4 验收 |
 
 ## 已完成项证据
@@ -26,6 +26,10 @@
 - 运行记录页顶部统计行（含「最常失败任务」）。
 - 真机 logs 实测：10 次运行、成功率 40%、逐任务明细正确。
 - 测试：tests/test_stats.py 3 例。
+
+**⑤ 截图回归（结构回归防线）**
+- tests/test_pipeline_structure.py 6 例：全部流水线 next/on_error 引用完整、Fight 链可达终节点且不跨文件、关键点击目标在 1280×720 内、自定义动作均已注册、回归夹具存在、任务目录入口全部在流水线中。
+- tests/fixtures/README.md：夹具采集流程与约束（后续扩展采集的规范）。
 
 ## Fight 部分完成项
 
@@ -46,7 +50,7 @@
 
 ## 测试与验证汇总
 
-- `pytest`：**102 passed，exit=0**（Phase 5 新增 14 例：fight 6 + recruit 5 + stats 3）。
+- `pytest`：**108 passed，exit=0**（Phase 5 新增 20 例：fight 6 + recruit 5 + stats 3 + 流水线结构 6）。
 - 流水线 lint：0 错误 0 警告。
 - 真机：公招/统计为代码层验证；Fight 导航与选择器路径真机复现（如上）。
 
