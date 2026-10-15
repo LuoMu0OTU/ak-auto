@@ -297,6 +297,14 @@ def tasks() -> None:
     typer.echo(f"\n共 {len(rows)} 个任务。")
 
 
+@app.command("gui")
+def gui() -> None:
+    """启动图形界面（深色主题，简单模式）。"""
+    from ak_auto.gui import run_gui
+
+    raise typer.Exit(run_gui())
+
+
 @app.command("restore")
 def restore() -> None:
     """还原被 MaaFw 伪最小化的游戏窗口（窗口「打不开」时用）。"""

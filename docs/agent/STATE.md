@@ -16,24 +16,30 @@ HEAD：297699b（Phase 1 完成提交；本轮提交号见 git log 最新一条�
 
 工作区状态：干净
 
-本轮获准任务：Phase 1 已人工验收（2026-10-13）；授权进入 Phase 2（GUI 基础），ADR-0001（PySide6）随之确认采纳；推送已授权。
+本轮获准任务：Phase 2（经人工授权）。第 1 轮完成：PySide6 依赖 + 最小窗口原型；后续轮次继续页面扩展/向导/gui 入口完善；推送已授权。
 
 
 已完成
 
 - Phase 0：完整审计 + 测试基线 + 架构设计 + 路线图，已人工验收。
-- Phase 1：八项全部完成并已人工验收（TaskDefinition 目录 / 状态机与 ExecutionResult / 事件总线 / ExecutionController 取消 / ConfigurationService / 三个基础设施适配器 / 共享 Fake + 录制截图回归 / CLI 真机验收与 post_stop 真机验证）。59 个测试全绿。细节见 CHANGELOG.md 与 git 历史。
+- Phase 1：八项全部完成并已人工验收。细节见 CHANGELOG.md 与 git 历史。
+- Phase 2 第 1 轮：
+  - PySide6 6.12.0 加入 requirements/pyproject；NOTICE 增加 PySide6 LGPL 声明。
+  - 新增 src/ak_auto/gui/：theme.py（深色设计令牌 + QSS + QPalette）、worker.py（TaskWorker(QThread) 桥接 ExecutionController：事件/结果经 Qt 信号回传、stop() 协作取消、finally 还原窗口）、main_window.py（侧边导航 + 四页面：首页（运行 StartUp/停止 + 日志窗）、任务中心（任务目录勾选展示）、运行记录、设置占位）、app.py（run_gui 入口）。
+  - __main__.py 新增 `gui` 命令。
+  - 测试：tests/test_gui.py 4 例（offscreen 冒烟：主窗口/主题/任务页/Worker 类型）。
+  - 真机验证：真实窗口启动（1024×680、深色主题、2 秒自动关闭退出码 0）——DPI/字体/线程三风险的首项目检通过。
 
 
 进行中 / 待办
 
-Phase 2 GUI 基础（按 AGENTS.md 第 3/4 节 + ROADMAP）：
-1. PySide6 依赖（requirements + NOTICE 许可声明）—— 本轮做。
-2. 最小窗口原型：主窗口 + 深色主题 + 首页 + 一个真实任务按钮（StartUp）+ QThread 桥接（ExecutionController/事件/取消），验证 DPI/字体/线程三条风险 —— 本轮做。
-3. 页面扩展：任务中心（勾选 + 推荐预设）、运行记录、设置（ConfigurationService 读写）。
-4. 首次启动向导（环境检查/游戏路径/资源准备/配置验证/试运行）。
-5. `ak_auto gui` 命令入口 + 冒烟测试。
-（第 3–5 项分轮推进，每轮小步 + 可验证。）
+Phase 2 后续轮次：
+- 首页完善：连接状态（GameWindowAdapter.acquired / AssetManager 状态）、今日任务、最近结果（logs/ 读取）、开始/停止串联任务中心勾选。
+- 任务中心：勾选集合 → 生成执行序列（ReturnToHome 间隔），推荐预设（每日常规/快速收菜/公招与信用/自定义日常）。
+- 设置页：ConfigurationService 读写（关键项 + 恢复默认 + 风险提示）。
+- 运行记录页：读 logs/run-*.json 展示。
+- 首次启动向导（环境检查/游戏路径/资源准备/配置验证/试运行）。
+- GUI 内运行的真实任务链路（真机验证：GUI 启动 StartUp → 停止）。
 
 
 修改文件
@@ -44,8 +50,10 @@ Phase 2 GUI 基础（按 AGENTS.md 第 3/4 节 + ROADMAP）：
 测试与验证
 
 命令	结果	环境/备注
-python -m pytest -q	59 passed	Phase 1 基线
-（本轮 GUI 新增后补充）	—	—
+python -m pytest -q	63 passed（15 旧 + 48 新）	Python 3.12.10 / pytest 9.1.1
+python -m ak_auto --help	含 gui 命令	—
+真机 GUI 启动	窗口 1024x680 深色主题渲染正常，2s 自动关闭退出码 0	本机真实桌面
+GUI 内跑真实任务	未做	下一轮（任务中心勾选串联后）真机验证
 
 
 已知问题 / 风险 / 阻塞

@@ -61,7 +61,17 @@
 
 ---
 
-## 3. 商标与免责
+## 3. PySide6（Qt for Python）
+
+- 上游仓库：https://code.qt.io/cgit/pyside/pyside-setup.git
+- 上游许可：**LGPL-3.0**（官方 Qt for Python 绑定；Qt 本体同时适用其 LGPLv3/商业双许可）
+- 使用方式：GUI 通过 PyPI 包 `PySide6` **动态链接调用**，本项目未修改其源代码。
+  按 LGPL 分发义务：发行产物保留 PySide6 作为可独立替换的库（动态链接、不静态并入本项目二进制），
+  本文件保留其来源与许可声明；正式打包（Phase 6）时随包附 PySide6 许可文本副本。
+
+---
+
+## 4. 商标与免责
 
 「明日方舟 / Arknights」为鹰角网络（Hypergryph）的商标与作品。本项目为非官方、非营利的个人辅助工具，
 与鹰角网络及 MAA 项目组无任何隶属关系。使用者需自行承担使用风险，并遵守游戏服务条款与适用法律。
