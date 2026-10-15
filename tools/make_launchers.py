@@ -4,16 +4,31 @@
     python tools/make_launchers.py
 
 会在仓库根目录生成：
-    首次安装.bat    首次安装 / 环境准备
-    启动日常.bat    前台运行日常全家桶（可见窗口）
-    静默日常.bat    后台运行日常（不显示窗口）
+    首次安装.bat    首次安装 / 环境准备（不需要管理员）
+    启动日常.bat    前台运行日常全家桶（可见窗口；自动申请管理员）
+    静默日常.bat    后台运行日常（自动申请管理员）
+    启动界面.bat    图形界面（自动申请管理员）
 
-说明：批处理文件必须用系统 ANSI 代码页（简体中文 = GBK/cp936）保存，
-否则 cmd 会按 936 解析 UTF-8 字节，中文乱码甚至把半行当命令执行。
+说明：
+    1. 批处理必须用系统 ANSI 代码页（简体中文 = GBK/cp936）保存，否则乱码甚至执行错乱。
+    2. 明日方舟客户端清单为 requireAdministrator：普通权限拉起会报 740。
+       因此会拉起游戏的脚本开头有自动提权头——双击时弹一次 UAC，点「是」后以管理员运行。
 """
 from __future__ import annotations
 
 import pathlib
+
+# 自动提权头：非管理员时用 UAC 重新以管理员启动自身（只弹一次）
+ELEVATE = """@echo off
+rem 明日方舟客户端要求管理员权限：非提权运行时自动重新以管理员启动（UAC 提示一次）
+whoami /groups | find "S-1-16-12288" >nul 2>&1
+if errorlevel 1 (
+    echo 正在申请管理员权限（明日方舟客户端需要），请在弹窗中点「是」...
+    powershell -NoProfile -Command "Start-Process -FilePath '%~f0' -WorkingDirectory '%~dp0' -Verb RunAs"
+    exit /b
+)
+
+"""
 
 SETUP = """@echo off
 chcp 936 >nul
@@ -94,7 +109,7 @@ echo.
 echo   下一步：
 echo     1) 确认游戏窗口化为 1280x720，游戏内 UI 缩放为 100%%
 echo     2) 打开 config\\config.json 检查游戏路径
-echo     3) 双击「启动日常.bat」开跑
+echo     3) 双击「启动界面.bat」进图形界面，或「启动日常.bat」一键日常
 echo ============================================================
 echo.
 echo 正在做一次环境自检 ...
@@ -103,8 +118,7 @@ echo.
 pause
 """
 
-RUN = """@echo off
-chcp 936 >nul
+RUN = ELEVATE + """chcp 936 >nul
 cd /d "%~dp0"
 title ak-auto 日常
 set PYTHONIOENCODING=gbk
@@ -140,8 +154,7 @@ echo.
 pause
 """
 
-QUIET = """@echo off
-chcp 936 >nul
+QUIET = ELEVATE + """chcp 936 >nul
 cd /d "%~dp0"
 rem 输出走文件，用 UTF-8 写日志更好看；控制台本身是 936。
 set PYTHONIOENCODING=utf-8
@@ -161,7 +174,27 @@ timeout /t 3 >nul
 exit
 """
 
-FILES = {"首次安装.bat": SETUP, "启动日常.bat": RUN, "静默日常.bat": QUIET}
+GUI = ELEVATE + """chcp 936 >nul
+cd /d "%~dp0"
+title ak-auto 图形界面
+set PYTHONIOENCODING=gbk
+
+if not exist ".venv\\Scripts\\python.exe" (
+    echo [错误] 还没安装。请先双击运行「首次安装.bat」。
+    echo.
+    pause
+    exit /b 1
+)
+
+".venv\\Scripts\\python.exe" -m ak_auto gui
+"""
+
+FILES = {
+    "首次安装.bat": SETUP,
+    "启动日常.bat": RUN,
+    "静默日常.bat": QUIET,
+    "启动界面.bat": GUI,
+}
 
 
 def main() -> None:

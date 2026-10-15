@@ -8,21 +8,25 @@ Agent 可恢复工作状态
 
 更新日期：2026-10-13
 
-当前阶段：Phase 2 GUI 基础（四项全部完成，待人工验收）
+当前阶段：Phase 2 GUI 基础（四项全部完成，待人工验收；期间修复用户报告的双击启动崩溃）
 
 当前分支：main
 
-HEAD：5ff9e48（第 3 轮提交；本轮提交号见 git log 最新一条）
+HEAD：72b105a（第 4 轮提交；本轮修复提交号见 git log 最新一条）
 
 工作区状态：干净
 
-本轮获准任务：Phase 2（经人工授权），四项全部完成待验收；推送已授权。
+本轮获准任务：Phase 2（经人工授权）待验收；本轮为用户报告的 bug 修复（双击启动崩溃），推送已授权。
 
 
 已完成
 
 - Phase 0：完整审计 + 测试基线 + 架构设计 + 路线图，已人工验收。
 - Phase 1：八项全部完成并已人工验收。细节见 CHANGELOG.md 与 git 历史。
+- 修复（用户报告：双击启动脚本崩溃）：
+  - 根因 1：`launch_game` 的 `Popen` 抛异常未捕获（游戏清单 requireAdministrator → 普通权限 CreateProcess 报 740）→ daily 直接崩出 traceback。已改为捕获 PermissionError/OSError 并播报具体原因与处理建议（提权运行或手动开游戏），返回 False 走干净错误路径。
+  - 根因 2：DSH/开发 shell 是管理员权限，掩盖了「普通用户双击无法拉起游戏」的问题。已给会拉起游戏的三个启动器加自动提权头（whoami 检查 High Mandatory Level → 非提权时 PowerShell Start-Process -Verb RunAs 弹一次 UAC），并新增「启动界面.bat」。
+  - 测试：tests/test_device_launch.py 4 例（路径缺失/权限不足/OSError/正常启动）；README 更新说明 UAC 与四个脚本。
 - Phase 2 第 1 轮：
   - PySide6 6.12.0 加入 requirements/pyproject；NOTICE 增加 PySide6 LGPL 声明。
   - 新增 src/ak_auto/gui/：theme.py（深色设计令牌 + QSS + QPalette）、worker.py（TaskWorker(QThread) 桥接 ExecutionController：事件/结果经 Qt 信号回传、stop() 协作取消、finally 还原窗口）、main_window.py（侧边导航 + 四页面：首页（运行 StartUp/停止 + 日志窗）、任务中心（任务目录勾选展示）、运行记录、设置占位）、app.py（run_gui 入口）。
@@ -58,12 +62,11 @@ HEAD：5ff9e48（第 3 轮提交；本轮提交号见 git log 最新一条）
 测试与验证
 
 命令	结果	环境/备注
-python -m pytest -q	68 passed，exit=0	Python 3.12.10 / pytest 9.1.1
-python -m ak_auto --help	含 gui 命令	—
-真机 GUI 启动	窗口 1024x680 深色主题渲染正常	本机真实桌面
-真机 GUI 内跑任务	「运行 StartUp」→ StartUp OK（3.6s），事件实时进日志窗	本机真实游戏
-真机 GUI 内停止任务	停止 → post_stop → 当前任务 CANCELLED → 剩余跳过 → 窗口还原，退出码 0	本机真实游戏
-向导	offscreen 冒烟 5 页齐全；首次运行自动弹出（真机未目检，需人工看一眼）	—
+python -m pytest -q	72 passed，exit=0	Python 3.12.10 / pytest 9.1.1
+坏路径 daily 失败路径	三条干净提示（路径不存在/启动失败/窗口未找到），无 traceback	本机
+游戏清单核实	Arknights.exe 内嵌 requireAdministrator → 双击需 UAC，启动器已自动提权	—
+提权头逻辑	whoami 检查 High Mandatory Level 在本机验证通过	本机
+真机 GUI 启动/跑任务/停止	见 Phase 2 各轮记录	本机真实游戏
 
 
 已知问题 / 风险 / 阻塞

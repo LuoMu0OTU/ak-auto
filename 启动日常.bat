@@ -1,4 +1,12 @@
 @echo off
+rem 明日方舟客户端要求管理员权限：非提权运行时自动重新以管理员启动（UAC 提示一次）
+whoami /groups | find "S-1-16-12288" >nul 2>&1
+if errorlevel 1 (
+    echo 正在申请管理员权限（明日方舟客户端需要），请在弹窗中点「是」...
+    powershell -NoProfile -Command "Start-Process -FilePath '%~f0' -WorkingDirectory '%~dp0' -Verb RunAs"
+    exit /b
+)
+
 chcp 936 >nul
 cd /d "%~dp0"
 title ak-auto 日常

@@ -159,15 +159,32 @@ def find_game_window(cfg: AppConfig) -> Optional[dict[str, Any]]:
     return None
 
 
-def launch_game(cfg: AppConfig) -> bool:
-    """按 config.startup.game_path 拉起游戏客户端（仅启动，不等待）。"""
+def launch_game(cfg: AppConfig, on_log: Any = None) -> bool:
+    """按 config.startup.game_path 拉起游戏客户端（仅启动，不等待）。
+
+    失败（路径无效 / 需管理员权限 / 被安全软件拦截等）时播报具体原因并返回 False，
+    绝不把 OSError 抛给上层（用户看到的是干净提示，不是 traceback）。
+    """
     import os
     import subprocess
 
+    def log(msg: str) -> None:
+        if on_log:
+            on_log(msg)
+
     path = cfg.startup.game_path
     if not path or not os.path.isfile(path):
+        log(f"启动失败：游戏路径不存在或不是文件：{path!r}")
         return False
-    subprocess.Popen([path], cwd=os.path.dirname(path) or None)
+    try:
+        subprocess.Popen([path], cwd=os.path.dirname(path) or None)
+    except PermissionError as e:
+        # 常见：ERROR_ELEVATION_REQUIRED (740)，游戏需要管理员权限
+        log(f"启动失败：权限不足（{e}）。可尝试：以管理员身份运行本程序，或先手动打开游戏再运行。")
+        return False
+    except OSError as e:
+        log(f"启动失败：{e}。请确认游戏未在运行、路径正确，或先手动打开游戏再运行。")
+        return False
     return True
 
 
@@ -209,8 +226,8 @@ def ensure_game_window(
         log("游戏未运行，且 config 里 startup.launch = false，不自动启动。")
         return None
 
-    if not launch_game(cfg):
-        log(f"游戏未运行，且启动失败：请检查 startup.game_path = {cfg.startup.game_path!r}")
+    if not launch_game(cfg, on_log=on_log):
+        log(f"游戏未运行且自动启动失败（startup.game_path = {cfg.startup.game_path!r}）。请手动打开游戏后重试。")
         return None
 
     log("游戏未运行，已拉起客户端，等待窗口出现（最长 %.0f 秒）..." % timeout)
