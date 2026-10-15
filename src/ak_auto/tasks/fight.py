@@ -46,11 +46,33 @@ def _read_int(context, img, node: str) -> int | None:
     return None
 
 
+def decide_loops(sanity, cost, cfg: AppConfig) -> tuple:
+    """纯函数：决定连战次数（Phase 5，可单元测试）。
+
+    返回 (n, reason)：n=None 表示不应执行（reason 说明原因）；
+    reason 为空字符串表示正常。
+    """
+    if not sanity or not cost:
+        return None, "cost-unknown"
+    if cfg.fight.min_sanity > 0 and sanity < cfg.fight.min_sanity:
+        return None, "sanity-below-min"
+    n = max_loops(sanity, cost)
+    if cfg.fight.times > 0:
+        n = min(n, cfg.fight.times)
+    if n <= 0:
+        return None, "sanity-insufficient"
+    return n, ""
+
+
 class FightSetRepeatCount(CustomAction):
     """算最大连战次数，并在次数列表里选中它（最上面的白色数字）。"""
 
+    def __init__(self, cfg: AppConfig) -> None:
+        super().__init__()
+        self.cfg = cfg
+
     def run(self, context, argv) -> bool:
-        cfg = AppConfig.load()
+        cfg = self.cfg
         ctrl = context.tasker.controller
         img = ctrl.cached_image
 
@@ -65,15 +87,16 @@ class FightSetRepeatCount(CustomAction):
         if not cost:
             cost = stage_ap_cost(cfg.fight.stage)
 
-        if not sanity or not cost:
-            print(f"[fight] 理智={sanity} 次数={count} 总消耗={total} → 算不出单次消耗，跳过", flush=True)
+        n, reason = decide_loops(sanity, cost, cfg)
+        if n is None:
+            print(f"[fight] {reason}（理智={sanity} 消耗={cost}）跳过刷图", flush=True)
             return False
-
-        n = max_loops(sanity, cost)
         print(f"[fight] 理智 {sanity} ÷ 单次消耗 {cost} → 最多 {n} 次", flush=True)
-        if n <= 0:
-            print("[fight] 理智不足一次，跳过", flush=True)
-            return False
+
+        # n == 1：默认就是单次，无需打开次数选择器（也避免选择器交互的风险）
+        if n == 1:
+            print("[fight] 目标 1 次，跳过次数选择器", flush=True)
+            return True
 
         hwnd = (ctrl.info or {}).get("hwnd")
 
@@ -102,5 +125,5 @@ class FightSetRepeatCount(CustomAction):
         return True
 
 
-def register(resource: Resource) -> None:
-    resource.register_custom_action("FightSetRepeatCount", FightSetRepeatCount())
+def register(resource: Resource, cfg: AppConfig) -> None:
+    resource.register_custom_action("FightSetRepeatCount", FightSetRepeatCount(cfg))
