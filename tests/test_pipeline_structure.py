@@ -60,7 +60,7 @@ def test_fight_chain_reaches_done() -> None:
 
 
 def test_fight_click_targets_in_bounds() -> None:
-    for name in ("Fight@FormationStart", "Fight@Enter", "Fight@Settlement", "Fight@BattleEnd"):
+    for name in ("Fight@FormationStart", "Fight@Enter", "Fight@BattleEnd", "Fight@AftermathClick"):
         node = PIPELINES[name]
         if "target" in node:
             x, y, w, h = node["target"]
