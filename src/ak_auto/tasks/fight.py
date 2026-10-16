@@ -1,13 +1,17 @@
-"""战斗任务：按理智自动设置代理指挥的最大连战次数。
+"""战斗任务：按理智与配置精确设置代理指挥连战次数（Phase 5 修复版）。
 
-思路（真机逆向出来的）：
-  关卡详情页上「⟳ ×N」是次数显示，点它弹出竖直的次数列表；
-  列表里**白色数字 = 当前理智还打得起**，灰色 = 打不起。
-  所以「最大可连战次数」= 列表里**最上面的白色数字**。
-  也可以直接算：理智 // 单次消耗。
+真机逆向结论（2026-10，人眼配合确认）：
+  1. 战斗准备页右下：代理指挥开关（约 (1070,578)），**开启后**其左侧出现「⟳×N」次数显示
+     （约 (1000,580)）。
+  2. 点「⟳×N」弹出竖直次数列表：**从大到小**（顶部最大，底部是 1），列表最大 10 次；
+     每个数字在列表里表现为上下两条白色亮线（间隔约 20px），相邻数字间隔约 52px；
+     可选（理智足够）的数字为白色，不可选为灰色。
+  3. 列表打开时自动定位到「最大可连战」可见的位置。
+  4. 因此：目标次数 = 最大可连战 时点最上方白色数字；
+     目标 1/2/3 时从底部往上数第 n 个白色数字（底部 = 1）。
 
 注意：这款游戏不认 MaaFw 的 SendMessage/PostMessage 滚轮，
-    必须用真实光标 + 硬件滚轮（device.native_wheel）。
+     必须用真实光标 + 硬件滚轮（device.native_wheel）。
 """
 from __future__ import annotations
 
@@ -21,12 +25,12 @@ from .. import device
 from ..config import AppConfig
 from ..data.stages import max_loops, stage_ap_cost
 
-# 关卡详情页：次数显示「⟳ ×N」
-COUNT_DISPLAY = (997, 592)
-# 次数列表里数字所在的竖直条带
-LIST_X = (992, 1020)
+# 战斗准备页：代理指挥开关 + 开启后左侧的次数显示
+TOGGLE = (1070, 578)
+COUNT_DISPLAY = (1000, 580)
+# 次数列表里数字所在的竖直条带（数字 x≈998-1014）
+LIST_X = (985, 1030)
 LIST_X_CENTER = 1006
-SCROLL_AT = (1006, 300)
 WHITE_THRESHOLD = 200
 
 
@@ -47,7 +51,7 @@ def _read_int(context, img, node: str) -> int | None:
 
 
 def decide_loops(sanity, cost, cfg: AppConfig) -> tuple:
-    """纯函数：决定连战次数（Phase 5，可单元测试）。
+    """纯函数：决定连战次数（可单元测试）。
 
     返回 (n, reason)：n=None 表示不应执行（reason 说明原因）；
     reason 为空字符串表示正常。
@@ -65,7 +69,7 @@ def decide_loops(sanity, cost, cfg: AppConfig) -> tuple:
 
 
 class FightSetRepeatCount(CustomAction):
-    """算最大连战次数，并在次数列表里选中它（最上面的白色数字）。"""
+    """按目标次数在次数列表里精确选中（不再假定游戏内已是目标值）。"""
 
     def __init__(self, cfg: AppConfig) -> None:
         super().__init__()
@@ -91,36 +95,42 @@ class FightSetRepeatCount(CustomAction):
         if n is None:
             print(f"[fight] {reason}（理智={sanity} 消耗={cost}）跳过刷图", flush=True)
             return False
-        print(f"[fight] 理智 {sanity} ÷ 单次消耗 {cost} → 最多 {n} 次", flush=True)
+        max_affordable = max_loops(sanity, cost)
+        print(f"[fight] 理智 {sanity} ÷ 单次消耗 {cost} → 目标 {n} 次（最大可连战 {max_affordable}）", flush=True)
 
-        # n == 1：默认就是单次，无需打开次数选择器（也避免选择器交互的风险）
-        if n == 1:
-            print("[fight] 目标 1 次，跳过次数选择器", flush=True)
-            return True
+        # 打开次数列表（代理指挥未开启时先开启开关 → 才会出现次数显示）
+        rows: list[tuple[int, int]] = []
+        for attempt in range(3):
+            ctrl.post_click(*COUNT_DISPLAY).wait()
+            time.sleep(0.9)
+            rows = device.bright_rows(
+                device.capture(ctrl), x0=LIST_X[0], x1=LIST_X[1], threshold=WHITE_THRESHOLD
+            )
+            if len(rows) >= 2:
+                break
+            ctrl.post_click(*TOGGLE).wait()  # 开启代理指挥 → 出现「⟳×N」
+            time.sleep(0.9)
 
-        hwnd = (ctrl.info or {}).get("hwnd")
-
-        # 1) 打开次数列表
-        ctrl.post_click(*COUNT_DISPLAY).wait()
-        time.sleep(0.9)
-
-        # 2) 滚到顶端（真实滚轮，游戏才认）
-        if hwnd:
-            device.native_wheel(hwnd, *SCROLL_AT, 40)
-        time.sleep(0.9)
-
-        # 3) 点最上面的白色数字
-        rows = device.bright_rows(
-            device.capture(ctrl), x0=LIST_X[0], x1=LIST_X[1], threshold=WHITE_THRESHOLD
-        )
-        if not rows:
-            print("[fight] 次数列表里没有可选项（可能列表没弹出）", flush=True)
+        if len(rows) < 2:
+            print("[fight] 次数列表里没有可选项（列表可能没弹出）", flush=True)
             ctrl.post_press_key(27).wait()
             return False
 
-        y = rows[0][0]
-        print(f"[fight] 选中列表最上面的白色数字 y={y}（共 {len(rows)} 个白色可选）", flush=True)
-        ctrl.post_click(LIST_X_CENTER, y).wait()
+        # 列表从大到小、每个数字两条白线、底部 = 1：
+        # 目标 == 最大可连战 → 最上面；否则从底部往上第 n 个数字。
+        if n >= max_affordable:
+            y = (rows[0][0] + rows[1][0]) / 2
+            print(f"[fight] 选最上面的白色数字（= {n} 次）y={y:.0f}", flush=True)
+        elif len(rows) >= 2 * n:
+            y = (rows[-2 * n][0] + rows[-2 * n + 1][0]) / 2
+            print(f"[fight] 从底部往上第 {n} 个白色数字 y={y:.0f}", flush=True)
+        else:
+            # 目标次数不在可视区（需向上滚动才能看到更大的数）：
+            # 近似取最上面白色行并如实记录（精确滚动待有图像输入后完善）
+            y = (rows[0][0] + rows[1][0]) / 2
+            print(f"[fight] 目标 {n} 次不在可视区，近似选最上面白色行 y={y:.0f}（如实记录）", flush=True)
+
+        ctrl.post_click(LIST_X_CENTER, int(y)).wait()
         time.sleep(0.6)
         return True
 

@@ -81,7 +81,7 @@
     "action": "Click",
     "target": [1030, 500, 150, 90],
     "post_delay": 2000,
-    "timeout": 900000,
+    "timeout": 1500000,
     "next": ["Fight@BattleEnd"]
   },
 
@@ -92,22 +92,21 @@
     "action": "Click",
     "target": [640, 360, 1, 1],
     "post_delay": 1500,
-    "next": ["Fight@Aftermath", "Fight@AftermathClick"]
+    "next": ["Fight@Aftermath"]
   },
 
   "Fight@Aftermath": {
-    "recognition": "OCR",
-    "expected": ["开始行动", "代理指挥"],
-    "roi": [900, 480, 380, 240],
-    "action": "DoNothing",
-    "next": ["Fight@Done"]
-  },
-
-  "Fight@AftermathClick": {
     "action": "Click",
     "target": [640, 360, 1, 1],
     "post_delay": 1500,
-    "next": ["Fight@Aftermath", "Fight@AftermathClick"]
+    "next": ["Fight@Aftermath2"]
+  },
+
+  "Fight@Aftermath2": {
+    "action": "Click",
+    "target": [30, 25, 20, 20],
+    "post_delay": 1000,
+    "next": ["Fight@Done"]
   },
 
   "Fight@Done": {

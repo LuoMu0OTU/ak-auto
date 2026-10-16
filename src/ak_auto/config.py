@@ -25,7 +25,8 @@ class DeviceConfig(BaseModel):
     kind: str = "win32"
     window_match: WindowMatch = Field(default_factory=WindowMatch)
     screencap: list[str] = Field(
-        default_factory=lambda: ["FramePool|PrintWindow", "DXGI_DesktopDup_Window|ScreenDC"]
+        # DXGI 优先：战斗切换渲染管线时 FramePool(PrintWindow) 会长时间截图失败（真机实测）
+        default_factory=lambda: ["DXGI_DesktopDup_Window|ScreenDC", "FramePool|PrintWindow"]
     )
     mouse_input: list[str] = Field(
         default_factory=lambda: [

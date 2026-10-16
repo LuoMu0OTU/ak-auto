@@ -3,7 +3,7 @@
   "device": {
     "kind": "win32",
     "window_match": { "class_name": "", "title_contains": "明日方舟", "process_name": "Arknights" },
-    "screencap": ["FramePool|PrintWindow", "DXGI_DesktopDup_Window|ScreenDC"],
+    "screencap": ["DXGI_DesktopDup_Window|ScreenDC", "FramePool|PrintWindow"],
     "mouse_input": ["SendMessageWithCursorPos", "PostMessageWithCursorPos", "AnchoredTouch", "Seize"],
     "keyboard_input": "PostMessage",
     "inference": "directml"
