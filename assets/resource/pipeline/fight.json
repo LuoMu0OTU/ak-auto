@@ -72,7 +72,8 @@
     "expected": "是否花费",
     "roi": [600, 400, 600, 150],
     "action": "Click",
-    "target": [0, 0, 180, 80],
+    "target": [900, 630, 70, 45],
+    "post_delay": 1000,
     "next": ["Fight@Done"]
   },
 
