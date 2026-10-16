@@ -8,7 +8,7 @@
 
   "Fight@Enter": {
     "action": "Click",
-    "target": [844, 58, 268, 272],
+    "target": [880, 110, 160, 100],
     "post_delay": 3000,
     "next": ["Fight@InTerminal"]
   },
