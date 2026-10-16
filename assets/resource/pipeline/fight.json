@@ -1,9 +1,17 @@
 {
   "Fight": {
     "next": [
+      "Fight@Recover",
       "Fight@Enter",
       "Fight@InTerminal"
     ]
+  },
+
+  "Fight@Recover": {
+    "action": "Custom",
+    "custom_action": "FightRecoverCapture",
+    "post_delay": 1000,
+    "next": ["Fight@Enter", "Fight@InTerminal"]
   },
 
   "Fight@Enter": {
@@ -82,7 +90,13 @@
     "target": [1030, 500, 150, 90],
     "post_delay": 2000,
     "timeout": 1500000,
-    "next": ["Fight@BattleEnd"]
+    "next": ["Fight@WaitBattle"]
+  },
+
+  "Fight@WaitBattle": {
+    "action": "DoNothing",
+    "post_delay": 300000,
+    "next": ["Fight@Recover2"]
   },
 
   "Fight@BattleEnd": {
@@ -92,7 +106,15 @@
     "action": "Click",
     "target": [640, 360, 1, 1],
     "post_delay": 1500,
+    "on_error": ["Fight@Aftermath"],
     "next": ["Fight@Aftermath"]
+  },
+
+  "Fight@Recover2": {
+    "action": "Custom",
+    "custom_action": "FightRecoverCapture",
+    "post_delay": 1000,
+    "next": ["Fight@BattleEnd"]
   },
 
   "Fight@Aftermath": {

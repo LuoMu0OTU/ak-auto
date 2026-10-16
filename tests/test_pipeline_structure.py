@@ -15,7 +15,7 @@ sys.path.insert(0, str(ROOT / "src"))
 PIPELINE_DIR = ROOT / "assets" / "resource" / "pipeline"
 
 # 与 src/ak_auto/tasks/*.py 的 register() 保持一致
-KNOWN_CUSTOM_ACTIONS = {"FightSetRepeatCount", "RecruitSelectTags", "MallSelectBuy"}
+KNOWN_CUSTOM_ACTIONS = {"FightSetRepeatCount", "FightRecoverCapture", "RecruitSelectTags", "MallSelectBuy"}
 
 
 def _load() -> dict[str, dict]:
