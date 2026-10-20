@@ -6,17 +6,32 @@ Agent 可恢复工作状态
 
 
 
-更新日期：2026-10-13
+更新日期：2026-10-17
 
-当前阶段：Phase 6 发布工程（进行中，起步：打包选型评估）
+当前阶段：Phase 6 发布工程（打包/CI/文档完成，干净机验收 + 发布待用户）
 
 当前分支：main
 
-HEAD：ad5e662（Phase 5 收尾提交）
+HEAD：7d661a5（Phase 6 CI + 文档提交；本地已提交，推送受 shell 网络中断影响待补推）
 
-工作区状态：干净
+工作区状态：干净（本地提交 7d661a5 未推送）
 
-本轮获准任务：Phase 5 已人工验收（2026-10-17）；授权进入 Phase 6 发布工程（安装/便携包、资源分发、CI、干净 Windows 验证、发布文档）；推送已授权。
+本轮获准任务：Phase 5 已人工验收（2026-10-17）；授权进入 Phase 6 发布工程；推送已授权。
+
+本轮成果（Phase 6）：
+- ADR-0003：打包选型 PyInstaller（onedir 便携）——理由见 docs/architecture/adr/ADR-0003-packaging.md。
+- frozen 路径层（src/ak_auto/paths.py）：数据目录=exe 旁（可写）、bundle=_internal（只读）；首启 bootstrap 复制流水线/数据表/配置模板。
+- fetch/lint 进程内化（src/ak_auto/assets_fetch.py + tools 薄包装）：打包版无 Python 解释器也可用；AssetManager.ensure 改进程内调用。
+- PyInstaller 打包（packaging/ak_auto.spec + launcher.py + tools/build_windows.py）：dist/AkAuto/ak-auto.exe（约 344 MB）。
+  - 控制台版构建 + GUI 启动时隐藏控制台（窗口版引导器在本机于 Python 之前静默崩溃，已规避并记录）。
+  - 显式收集 maa/ak_auto 惰性导入子模块 + maa/bin 动态库（MaaFramework/onnxruntime/opencv 等）。
+- 真机冒烟（打包版）：doctor 全绿（Python/MaaFw/资源/游戏路径/窗口）、GUI 首次启动向导弹出、`run ReturnToHome` 全栈跑通（控制器+OCR+点击+流水线）。
+- CI：.github/workflows/ci.yml（test=pytest+lint，build=PyInstaller+artifact）。
+- 文档：docs/BUILD.md（构建+干净机验收清单）、README 加便携包章节、ROADMAP/CHANGELOG 更新。
+
+待办（Phase 6 收尾）：
+- 干净机验收（用户另一台机器跑 docs/BUILD.md 清单）——本机无第二台干净机，如实待用户。
+- 推送 7d661a5（shell 网络到 GitHub 间歇中断，已多次重试失败）。
 
 
 已完成
