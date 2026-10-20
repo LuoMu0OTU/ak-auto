@@ -13,10 +13,19 @@
 from __future__ import annotations
 
 import argparse
-import os
 import subprocess
 import sys
 from pathlib import Path
+
+
+def _utf8() -> None:
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            try:
+                stream.reconfigure(encoding="utf-8", errors="replace")
+            except Exception:
+                pass
+
 
 ROOT = Path(__file__).resolve().parent.parent
 SPEC = ROOT / "packaging" / "ak_auto.spec"
@@ -25,6 +34,7 @@ EXE = DIST / "ak-auto.exe"
 
 
 def main() -> int:
+    _utf8()
     ap = argparse.ArgumentParser(description="构建 Windows 便携包")
     ap.add_argument("--smoke", action="store_true", help="构建后启动打包版 GUI 冒烟")
     ap.add_argument("--no-clean", action="store_true", help="增量构建（不清除上次产物）")

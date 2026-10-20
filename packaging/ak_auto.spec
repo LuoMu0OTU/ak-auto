@@ -16,8 +16,6 @@ MAA_BIN = Path(hooks.__file__).resolve().parent.parent.parent.parent / "maa" / "
 
 datas = [
     (str(PROJECT / "assets" / "resource" / "pipeline"), "assets/resource/pipeline"),
-    (str(PROJECT / "assets" / "maa-vendor"), "assets/maa-vendor"),
-    (str(PROJECT / "tools"), "tools"),
     (str(PROJECT / "config" / "config.example.json"), "config"),
     (str(PROJECT / "LICENSE"), "."),
     (str(PROJECT / "NOTICE.md"), "."),

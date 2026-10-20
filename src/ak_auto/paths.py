@@ -35,11 +35,10 @@ def data_dir() -> Path:
     return Path(__file__).resolve().parent.parent.parent
 
 
-# 只读资源（bundle 内）相对路径清单：首启复制到数据目录
+# 只读资源（bundle 内）相对路径清单：首启复制到数据目录。
+# 数据表/模板图/OCR 模型不在此列——由 fetch-assets 在首启下载。
 _BOOTSTRAP_TREES = (
     "assets/resource/pipeline",
-    "assets/maa-vendor",
-    "tools",
 )
 _BOOTSTRAP_FILES = (
     "config/config.example.json",
