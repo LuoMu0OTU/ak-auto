@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+
+jobs:
+  test:
+    name: 测试（pytest + 流水线 lint）
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: 安装依赖
+        run: pip install -e ".[dev]"
+      - name: 单元测试
+        run: python -m pytest -q
+      - name: 流水线静态校验
+        run: python tools/pipeline_lint.py
+
+  build:
+    name: Windows 便携包构建
+    runs-on: windows-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: 安装依赖
+        run: pip install -e ".[dev]"
+      - name: 构建
+        run: python tools/build_windows.py
+      - name: 冒烟（doctor 自检）
+        run: |
+          & .\dist\AkAuto\ak-auto.exe doctor
+        continue-on-error: true
+      - name: 上传产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: AkAuto-windows
+          path: dist/AkAuto/
+          if-no-files-found: error
