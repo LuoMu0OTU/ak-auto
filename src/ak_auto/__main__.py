@@ -285,6 +285,17 @@ def check_update() -> None:
     raise typer.Exit(0)
 
 
+@app.command("export-diagnostics")
+def export_diagnostics(out: str = typer.Option("", "--out", help="输出目录（默认 logs/）")) -> None:
+    """打包诊断包（日志 + 脱敏配置 + 失败截图）为 zip。"""
+    from ak_auto.application.diagnostics_export import export_diagnostics
+    from ak_auto.config import PROJECT_ROOT
+
+    p = export_diagnostics(PROJECT_ROOT, out_dir=out or None)
+    typer.echo(f"诊断包已生成：{p}")
+    raise typer.Exit(0)
+
+
 @app.command("gui")
 def gui() -> None:
     """启动图形界面（深色主题，简单模式）。"""

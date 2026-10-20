@@ -368,10 +368,13 @@ class DiagnosticsPage(QWidget):
         self.check_btn.clicked.connect(self._run_checks)
         self.win_btn = QPushButton("窗口列表（probe）")
         self.win_btn.clicked.connect(self._run_windows)
+        self.export_btn = QPushButton("导出诊断包")
+        self.export_btn.clicked.connect(self._export)
 
         row = QHBoxLayout()
         row.addWidget(self.check_btn)
         row.addWidget(self.win_btn)
+        row.addWidget(self.export_btn)
         row.addStretch(1)
 
         lay = QVBoxLayout(self)
@@ -410,5 +413,29 @@ class DiagnosticsPage(QWidget):
             self.output.setPlainText("\n".join(lines))
 
         self._thread = _FnThread(lambda: window_list())
+        self._thread.done.connect(render)
+        self._thread.start()
+
+    def _export(self) -> None:
+        from ..application.diagnostics_export import export_diagnostics
+        from ..config import PROJECT_ROOT
+
+        self.output.setPlainText("导出中 ...")
+        self.export_btn.setEnabled(False)
+
+        def render(p) -> None:
+            self.export_btn.setEnabled(True)
+            if isinstance(p, Exception):
+                self.output.setPlainText(f"导出失败：{p}")
+                return
+            self.output.setPlainText(f"诊断包已生成：\n{p}\n\n（日志 + 脱敏配置 + 失败截图）")
+
+        def run():
+            try:
+                return export_diagnostics(PROJECT_ROOT)
+            except Exception as e:  # noqa: BLE001
+                return e
+
+        self._thread = _FnThread(run)
         self._thread.done.connect(render)
         self._thread.start()
