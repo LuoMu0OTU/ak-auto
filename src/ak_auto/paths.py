@@ -43,7 +43,6 @@ _BOOTSTRAP_TREES = (
 )
 _BOOTSTRAP_FILES = (
     "config/config.example.json",
-    "config/config.example.preset.json",
 )
 
 
