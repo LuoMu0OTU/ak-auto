@@ -44,7 +44,7 @@ def test_asset_manager_status_ready(tmp_path: Path) -> None:
 def test_asset_manager_ensure_shortcut_when_ready(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     _make_ready_assets(tmp_path)
     calls: list = []
-    monkeypatch.setattr(subprocess, "run", lambda *a, **k: calls.append(a))
+    monkeypatch.setattr("ak_auto.assets_fetch.fetch", lambda *a, **k: calls.append(a))
     assert AssetManager(tmp_path).ensure() is True
     assert not calls  # 已就绪时不调 fetcher
 
@@ -52,12 +52,12 @@ def test_asset_manager_ensure_shortcut_when_ready(tmp_path: Path, monkeypatch: p
 def test_asset_manager_ensure_invokes_fetcher(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     calls: list = []
 
-    class _Done:
-        returncode = 0
-
-    monkeypatch.setattr(subprocess, "run", lambda *a, **k: calls.append(a) or _Done())
+    monkeypatch.setattr(
+        "ak_auto.assets_fetch.fetch",
+        lambda root, tag="", force=False: calls.append((root, tag, force)),
+    )
     AssetManager(tmp_path).ensure(tag="v6.19.0")
-    assert calls and "v6.19.0" in calls[0][0]
+    assert calls and calls[0][0] == tmp_path and calls[0][1] == "v6.19.0"
 
 
 # ---- MaaFrameworkAdapter ----

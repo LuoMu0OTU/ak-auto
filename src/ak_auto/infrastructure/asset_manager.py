@@ -1,11 +1,10 @@
 """Infrastructure 层：AssetManager（Phase 1 任务 6）。
 
 识别资源（MAA 素材）的存在性检查与按需获取；GUI 首次启动向导与 doctor 共用。
+Phase 6：获取逻辑进程内化（ak_auto.assets_fetch），打包版无 Python 解释器也可用。
 """
 from __future__ import annotations
 
-import subprocess
-import sys
 from pathlib import Path
 from typing import Any
 
@@ -37,9 +36,10 @@ class AssetManager:
         return bool(self.status()["ready"])
 
     def ensure(self, tag: str = "v6.19.0") -> bool:
-        """资源不齐时拉取（委托 tools/fetch_maa_assets.py）；返回是否就绪。"""
+        """资源不齐时进程内拉取（ak_auto.assets_fetch）；返回是否就绪。"""
         if self.ready:
             return True
-        script = self.root / "tools" / "fetch_maa_assets.py"
-        subprocess.run([sys.executable, str(script), "--tag", tag])
+        from ..assets_fetch import fetch
+
+        fetch(self.root, tag=tag)
         return self.ready

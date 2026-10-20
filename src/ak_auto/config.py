@@ -11,8 +11,10 @@ from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
-_SCRIPT_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = _SCRIPT_DIR.parent.parent
+from .paths import data_dir
+
+# 数据目录：开发模式=仓库根；打包模式=exe 旁目录（ADR-0003 配置与程序分离）
+PROJECT_ROOT = data_dir()
 
 
 class WindowMatch(BaseModel):

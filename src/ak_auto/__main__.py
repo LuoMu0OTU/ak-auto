@@ -10,7 +10,6 @@
 """
 from __future__ import annotations
 
-import subprocess
 import sys
 
 import typer
@@ -30,6 +29,10 @@ def _utf8() -> None:
 @app.callback()
 def _callback() -> None:
     _utf8()
+    # 打包版首启：把只读资源（流水线/数据表/配置模板）复制到数据目录
+    from ak_auto import paths
+
+    paths.ensure_data_layout()
 
 
 @app.command("doctor")
@@ -95,11 +98,12 @@ def probe(
 
 @app.command("fetch-assets")
 def fetch_assets(tag: str = typer.Option("v6.19.0", help="MAA 发版 tag")) -> None:
-    """组装 MAA 识别资源（委托给 tools/fetch_maa_assets.py）。"""
+    """组装 MAA 识别资源（进程内执行 ak_auto.assets_fetch）。"""
+    from ak_auto.assets_fetch import fetch
     from ak_auto.config import PROJECT_ROOT
 
-    script = PROJECT_ROOT / "tools" / "fetch_maa_assets.py"
-    raise typer.Exit(subprocess.run([sys.executable, str(script), "--tag", tag]).returncode)
+    fetch(PROJECT_ROOT, tag=tag)
+    raise typer.Exit(0)
 
 
 def _load_config(path: str = ""):
@@ -288,11 +292,17 @@ def restore() -> None:
 
 @app.command("lint")
 def lint() -> None:
-    """流水线静态校验。"""
+    """流水线静态校验（进程内执行 tools/pipeline_lint 的逻辑）。"""
+    import importlib.util
+    from pathlib import Path
+
     from ak_auto.config import PROJECT_ROOT
 
     script = PROJECT_ROOT / "tools" / "pipeline_lint.py"
-    raise typer.Exit(subprocess.run([sys.executable, str(script)]).returncode)
+    spec = importlib.util.spec_from_file_location("pipeline_lint", script)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    raise typer.Exit(mod.main())
 
 
 def main() -> None:

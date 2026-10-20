@@ -8,10 +8,14 @@ def run_gui() -> int:
     """启动图形界面并进入事件循环；返回 Qt 退出码。"""
     from PySide6.QtWidgets import QApplication, QDialog
 
+    from .. import paths
     from ..application import ConfigurationService
     from .main_window import MainWindow
     from .theme import apply_theme
     from .wizard import FirstRunWizard
+
+    # 打包版首启：把只读资源（流水线/数据表/配置模板）复制到数据目录
+    paths.ensure_data_layout()
 
     svc = ConfigurationService()
     cfg = svc.load()
