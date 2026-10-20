@@ -2,19 +2,19 @@
 
 > 只记录用户可见的变化。格式参考 Keep a Changelog；日期为本地时间。
 
-## [未发布] —— Phase 6 发布工程（进行中）
+## [0.1.0] - 2026-10-20
 
-### 新增
+首个正式发布版本：Phase 0–6 全部完成并人工验收（Phase 5 部分子项如实保留未完成，见验收报告）。
+
+### 新增（Phase 6 发布工程）
 
 - Windows 便携包：`dist/AkAuto/ak-auto.exe`（双击启动 GUI，PyInstaller onedir，约 344 MB）；无需预装 Python。
 - 配置与程序分离：可写数据（配置/日志/识别资源）放 exe 旁目录，升级只替换 exe + `_internal`。
-- 打包版首次启动自动把流水线/数据表/配置模板复制到数据目录，识别资源仍由 fetch-assets 首次下载。
+- 打包版首次启动自动把流水线/配置模板复制到数据目录，识别资源由 fetch-assets 首次下载。
 - CLI 子命令（doctor/lint/fetch-assets）进程内化，打包版无 Python 解释器也可用。
-- CI（GitHub Actions）：pytest + 流水线 lint + Windows 便携包构建。
+- CI（GitHub Actions）：pytest + 流水线 lint + Windows 便携包构建 + artifact。
 
-## [未发布] —— Phase 5 自动化增强（已完成，待人工验收）
-
-### 新增
+### 新增（Phase 5 自动化增强）
 
 - 公招策略：高级设置里的「标签优先级」现在真正生效——当招募词条出现优先标签（如高级资深干员）时，单独选择该标签（保底最高稀有度）；未出现时沿用原保底策略。
 - 运行记录页顶部新增聚合统计：最近运行次数、成功率、累计耗时、最常失败的任务。
