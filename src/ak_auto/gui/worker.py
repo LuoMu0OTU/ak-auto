@@ -72,3 +72,23 @@ class TaskWorker(QThread):
     def stop(self) -> None:
         """请求安全停止（协作式取消）。"""
         self._stop.set()
+
+
+class UpdateWorker(QThread):
+    """后台查询 GitHub Releases 最新版本（Phase 7 自动更新检查）。
+
+    只检查+回传结果，不下载/安装；失败回传 None（UI 静默忽略）。
+    """
+
+    result = Signal(object)  # UpdateInfo | None
+
+    def __init__(self, current: str, repo: str, parent=None) -> None:
+        super().__init__(parent)
+        self.current = current
+        self.repo = repo
+
+    def run(self) -> None:  # noqa: D102 —— QThread 入口
+        from ..application.updates import check_latest
+
+        info = check_latest(self.current, repo=self.repo)
+        self.result.emit(info)

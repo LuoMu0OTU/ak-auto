@@ -121,6 +121,13 @@ class UiConfig(BaseModel):
         return v
 
 
+class UpdatesConfig(BaseModel):
+    """更新检查（Phase 7）：只检查+提示，不自动下载安装。"""
+
+    check_enabled: bool = True   # 启动时后台检查新版本
+    repo: str = "LuoMu0OTU/ak-auto"
+
+
 class PresetConfig(BaseModel):
     """自定义任务预设（与内置推荐预设区分：内置预设不落配置）。"""
 
@@ -142,6 +149,7 @@ class AppConfig(BaseModel):
     award: AwardConfig = Field(default_factory=AwardConfig)
     runtime: RuntimeConfig = Field(default_factory=RuntimeConfig)
     ui: UiConfig = Field(default_factory=UiConfig)
+    updates: UpdatesConfig = Field(default_factory=UpdatesConfig)
     custom_presets: list[PresetConfig] = Field(default_factory=list)
 
     @classmethod

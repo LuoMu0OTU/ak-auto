@@ -70,6 +70,10 @@ class HomePage(QWidget):
         self.status_label.setObjectName("muted")
         self.last_label = QLabel(self._last_run_text())
         self.last_label.setObjectName("muted")
+        self.update_label = QLabel("")
+        self.update_label.setObjectName("update")
+        self.update_label.setOpenExternalLinks(True)
+        self.update_label.setVisible(False)
         self.run_state = QLabel("运行状态：空闲")
         self.progress = QProgressBar()
         self.progress.setRange(0, 1)
@@ -93,6 +97,7 @@ class HomePage(QWidget):
         lay.addWidget(title)
         lay.addWidget(self.status_label)
         lay.addWidget(self.last_label)
+        lay.addWidget(self.update_label)
         lay.addWidget(self.run_state)
         lay.addWidget(self.progress)
         lay.addLayout(row)
@@ -140,6 +145,16 @@ class HomePage(QWidget):
 
     def refresh_last(self) -> None:
         self.last_label.setText(self._last_run_text())
+
+    def show_update(self, info) -> None:
+        """展示新版本提示（点击链接跳到 GitHub Release 页）；info=None 或非更新则隐藏。"""
+        if info is None or not info.is_newer:
+            self.update_label.setVisible(False)
+            return
+        self.update_label.setText(
+            f'🔔 发现新版本 <a href="{info.url}">{info.latest}</a>（当前 {info.current}）'
+        )
+        self.update_label.setVisible(True)
 
     @staticmethod
     def _status_text(cfg) -> str:
@@ -341,6 +356,9 @@ class MainWindow(QMainWindow):
         self.task_page.run_requested.connect(self._start_and_show_log)
         self.nav.currentRowChanged.connect(self._on_nav)
 
+        # 自动更新检查 worker 占位（由 GUI 入口 run_gui 在窗口显示后触发）
+        self._update_worker = None
+
         # 模式切换（只切换 ui.mode 与可见项，不重置任何参数）
         self.mode_btn = QPushButton()
         self.mode_btn.clicked.connect(self._toggle_mode)
@@ -378,6 +396,20 @@ class MainWindow(QMainWindow):
 
     def _on_nav(self, row: int) -> None:
         self.pages.setCurrentIndex(row)
+
+    def check_updates(self) -> None:
+        """后台检查新版本（Phase 7；config.updates.check_enabled 控制）。
+
+        由 GUI 入口 run_gui 在窗口显示后调用（不在构造器里触发，避免测试/短生命周期崩溃）。
+        """
+        if not getattr(self.cfg, "updates", None) or not self.cfg.updates.check_enabled:
+            return
+        from .. import __version__
+        from .worker import UpdateWorker
+
+        self._update_worker = UpdateWorker(__version__, self.cfg.updates.repo, self)
+        self._update_worker.result.connect(self.home.show_update)
+        self._update_worker.start()
 
     # ---- 任务执行（经 TaskWorker / Application 层）----
     def _start(self, entries: list[str]) -> None:

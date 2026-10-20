@@ -35,4 +35,5 @@ def run_gui() -> int:
     if svc.warning:
         win._log(f"[warn] {svc.warning}")  # noqa: SLF001 —— 启动期提示
     win.show()
+    win.check_updates()  # 后台检查新版本（Phase 7，只提示不安装）
     return app.exec()

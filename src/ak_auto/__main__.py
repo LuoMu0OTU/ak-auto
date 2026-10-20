@@ -267,6 +267,24 @@ def tasks() -> None:
     typer.echo(f"\n共 {len(rows)} 个任务。")
 
 
+@app.command("check-update")
+def check_update() -> None:
+    """检查 GitHub Releases 是否有新版本（只提示，不自动安装）。"""
+    from ak_auto import __version__
+    from ak_auto.application.updates import check_latest
+
+    info = check_latest(__version__)
+    if info is None:
+        typer.echo(f"检查失败（网络不可达？）。当前版本 {__version__}")
+        raise typer.Exit(1)
+    if info.is_newer:
+        typer.echo(f"发现新版本 {info.latest}（当前 {__version__}）")
+        typer.echo(f"下载：{info.url}")
+    else:
+        typer.echo(f"已是最新版本 {__version__}")
+    raise typer.Exit(0)
+
+
 @app.command("gui")
 def gui() -> None:
     """启动图形界面（深色主题，简单模式）。"""
