@@ -296,6 +296,39 @@ def export_diagnostics(out: str = typer.Option("", "--out", help="输出目录�
     raise typer.Exit(0)
 
 
+@app.command("profile")
+def profile(
+    save: str = typer.Option("", "--save", help="把当前配置保存为命名方案"),
+    load: str = typer.Option("", "--load", help="载入命名方案"),
+    delete: str = typer.Option("", "--delete", help="删除命名方案"),
+    list_only: bool = typer.Option(False, "--list", help="列出所有方案"),
+) -> None:
+    """多配置方案管理（config/profiles/*.json）。"""
+    from ak_auto.application import ConfigurationService, profiles as P
+
+    svc = ConfigurationService()
+    cfg = svc.load()
+    actions = [a for a, _ in (("save", save), ("load", load), ("delete", delete)) if _]
+    if len(actions) > 1 or (not actions and not list_only):
+        typer.echo("请指定 --save/--load/--delete 之一，或 --list。")
+        raise typer.Exit(2)
+
+    if save:
+        P.save_profile(cfg, save)
+        typer.echo(f"已保存方案「{save}」")
+    elif load:
+        P.apply_profile(cfg, load)
+        svc.save(cfg)
+        typer.echo(f"已载入方案「{load}」（已写入 config.json）")
+    elif delete:
+        ok = P.delete_profile(delete)
+        typer.echo(f"{'已删除' if ok else '方案不存在'}：{delete}")
+    else:
+        names = P.list_profiles()
+        typer.echo("配置方案：" + (", ".join(names) if names else "（无）"))
+    raise typer.Exit(0)
+
+
 @app.command("gui")
 def gui() -> None:
     """启动图形界面（深色主题，简单模式）。"""

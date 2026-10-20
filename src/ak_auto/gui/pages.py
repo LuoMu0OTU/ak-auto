@@ -7,11 +7,14 @@ from pathlib import Path
 from PySide6.QtCore import QThread, Signal
 from PySide6.QtWidgets import (
     QCheckBox,
+    QComboBox,
     QFormLayout,
     QHBoxLayout,
+    QInputDialog,
     QLabel,
     QLineEdit,
     QListWidget,
+    QMessageBox,
     QPlainTextEdit,
     QPushButton,
     QSpinBox,
@@ -85,6 +88,23 @@ class SettingsPage(QWidget):
         self.wizard_btn = QPushButton("重新运行首次向导")
         self.wizard_btn.clicked.connect(self._wizard)
 
+        # 多配置方案（Phase 7）：保存/载入/删除命名方案
+        self.profile_combo = QComboBox()
+        self.profile_save_btn = QPushButton("保存为方案")
+        self.profile_save_btn.clicked.connect(self._save_profile)
+        self.profile_load_btn = QPushButton("载入方案")
+        self.profile_load_btn.clicked.connect(self._load_profile)
+        self.profile_del_btn = QPushButton("删除方案")
+        self.profile_del_btn.clicked.connect(self._delete_profile)
+        self._refresh_profiles()
+
+        profilerow = QHBoxLayout()
+        profilerow.addWidget(QLabel("配置方案"))
+        profilerow.addWidget(self.profile_combo, 1)
+        profilerow.addWidget(self.profile_save_btn)
+        profilerow.addWidget(self.profile_load_btn)
+        profilerow.addWidget(self.profile_del_btn)
+
         row = QHBoxLayout()
         row.addWidget(self.save_btn)
         row.addWidget(self.reset_btn)
@@ -95,6 +115,7 @@ class SettingsPage(QWidget):
         lay.addLayout(form)
         lay.addWidget(risk)
         lay.addLayout(row)
+        lay.addLayout(profilerow)
         lay.addWidget(self.wizard_btn)
         lay.addWidget(self.status)
         lay.addStretch(1)
@@ -123,6 +144,56 @@ class SettingsPage(QWidget):
         self.stone.setValue(d.fight.stone)
         self.retry.setValue(d.runtime.retry_per_task)
         self.status.setText("已恢复默认（点「保存」生效）")
+
+    # ---- 多配置方案（Phase 7）----
+    def _refresh_profiles(self) -> None:
+        from ..application.profiles import list_profiles
+
+        self.profile_combo.clear()
+        self.profile_combo.addItems(list_profiles())
+
+    def _reload_fields(self) -> None:
+        """载入方案后把界面字段刷新为当前 cfg。"""
+        self.game_path.setText(self.cfg.startup.game_path)
+        self.stage.setText(self.cfg.fight.stage)
+        self.times.setValue(self.cfg.fight.times)
+        self.medicine.setValue(self.cfg.fight.medicine)
+        self.stone.setValue(self.cfg.fight.stone)
+        self.retry.setValue(self.cfg.runtime.retry_per_task)
+
+    def _save_profile(self) -> None:
+        from ..application.profiles import save_profile
+
+        name, ok = QInputDialog.getText(self, "保存为方案", "方案名（如 账号A / 清体力策略）：")
+        if not ok or not name.strip():
+            return
+        save_profile(self.cfg, name.strip())
+        self._refresh_profiles()
+        self.status.setText(f"已保存为方案「{name.strip()}」")
+
+    def _load_profile(self) -> None:
+        from ..application.profiles import apply_profile
+
+        name = self.profile_combo.currentText()
+        if not name:
+            self.status.setText("没有可选方案（先「保存为方案」）")
+            return
+        apply_profile(self.cfg, name)
+        self.svc.save(self.cfg)
+        self._reload_fields()
+        self.status.setText(f"已载入方案「{name}」（已保存生效；其它页面重启窗口后刷新）")
+
+    def _delete_profile(self) -> None:
+        from ..application.profiles import delete_profile
+
+        name = self.profile_combo.currentText()
+        if not name:
+            return
+        if QMessageBox.question(self, "删除方案", f"删除方案「{name}」？") != QMessageBox.StandardButton.Yes:
+            return
+        delete_profile(name)
+        self._refresh_profiles()
+        self.status.setText(f"已删除方案「{name}」")
 
 
 class RunLogPage(QWidget):
