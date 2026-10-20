@@ -8,15 +8,15 @@ Agent 可恢复工作状态
 
 更新日期：2026-10-20
 
-当前阶段：Phase 6 发布工程 —— 已发布 v0.1.0（正式发布完成）
+当前阶段：Phase 7 持续维护（起步；backlog 已梳理在 ROADMAP）
 
 当前分支：main
 
-HEAD：0c7bc86（CHANGELOG 0.1.0）+ tag v0.1.0
+HEAD：84ae3f5
 
 工作区状态：干净
 
-本轮成果：Phase 6 全部交付 + v0.1.0 正式发布（Release 已创建，附件 AkAuto-windows.zip 110.3 MB 已上传；CI 全绿）。
+本轮获准任务：v0.1.0 已发布（Phase 6 完成）；授权进入 Phase 7 持续维护（按真实反馈修复 + 回归 + P2 扩展）。
 
 本轮成果（Phase 6）：
 - ADR-0003：打包选型 PyInstaller（onedir 便携）——理由见 docs/architecture/adr/ADR-0003-packaging.md。
