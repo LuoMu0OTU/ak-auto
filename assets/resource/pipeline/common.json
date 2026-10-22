@@ -57,8 +57,12 @@
   },
 
   "StartUp@CloseAnno": {
+    "recognition": "OCR",
+    "expected": ["公告", "活动公告", "更新公告"],
+    "roi": [0, 0, 1281, 720],
     "action": "Click",
     "target": [1050, 60, 230, 140],
+    "post_delay": 800,
     "next": ["StartUp"]
   },
 
@@ -115,8 +119,12 @@
   },
 
   "ReturnToHome@CloseAnno": {
+    "recognition": "OCR",
+    "expected": ["公告", "活动公告", "更新公告"],
+    "roi": [0, 0, 1281, 720],
     "action": "Click",
     "target": [1050, 60, 230, 140],
+    "post_delay": 800,
     "next": ["ReturnToHome"]
   },
 
