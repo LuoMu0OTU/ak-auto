@@ -1,61 +1,132 @@
 {
   "Infrast": {
     "next": [
+      "Infrast@ResetRound",
       "Infrast@Enter",
       "Infrast@Wait"
     ]
   },
-
+  "Infrast@ResetRound": {
+    "action": "Custom",
+    "custom_action": "InfrastResetRound",
+    "next": [
+      "Infrast@Enter",
+      "Infrast@Wait"
+    ]
+  },
   "Infrast@Enter": {
     "action": "Click",
-    "target": [935, 570, 85, 75],
+    "target": [
+      935,
+      570,
+      85,
+      75
+    ],
     "post_delay": 3000,
-    "next": ["Infrast@Wait"]
+    "next": [
+      "Infrast@Wait"
+    ]
   },
-
   "Infrast@Wait": {
     "recognition": "OCR",
-    "expected": ["进驻总览", "建造模式"],
-    "roi": [0, 80, 200, 150],
+    "expected": [
+      "进驻总览",
+      "建造模式"
+    ],
+    "roi": [
+      0,
+      80,
+      200,
+      150
+    ],
     "action": "DoNothing",
-    "next": ["Infrast@Bell"]
+    "next": [
+      "Infrast@ResumeStations",
+      "Infrast@Bell"
+    ]
   },
-
+  "Infrast@ResumeStations": {
+    "recognition": "OCR",
+    "expected": [
+      "进驻总览",
+      "建造模式"
+    ],
+    "roi": [
+      0,
+      80,
+      200,
+      150
+    ],
+    "action": "Custom",
+    "custom_action": "InfrastResumeStations",
+    "post_delay": 500,
+    "on_error": [
+      "Infrast@Bell"
+    ],
+    "next": [
+      "Infrast@ResumeStations",
+      "Infrast@Bell"
+    ]
+  },
+  "Infrast@OcrMfgStation": {
+    "recognition": "OCR",
+    "expected": "制造站",
+    "roi": [
+      0,
+      90,
+      780,
+      560
+    ],
+    "action": "DoNothing"
+  },
   "Infrast@Bell": {
     "action": "Click",
-    "target": [1186, 75, 84, 29],
+    "target": [
+      1186,
+      75,
+      84,
+      29
+    ],
     "post_delay": 2000,
-    "next": ["Infrast@MfgStopped", "Infrast@TradeStopped", "Infrast@Collect", "Infrast@Done"]
+    "next": [
+      "Infrast@Collect",
+      "Infrast@NextRound"
+    ]
   },
-
-  "Infrast@MfgStopped": {
-    "recognition": "OCR",
-    "expected": ["制造停工", "制造站停工"],
-    "roi": [40, 640, 800, 80],
-    "action": "Click",
-    "post_delay": 2000,
-    "next": ["Infrast@MfgStopped", "Infrast@TradeStopped", "Infrast@Collect", "Infrast@Done"]
-  },
-
-  "Infrast@TradeStopped": {
-    "recognition": "OCR",
-    "expected": ["贸易停工", "贸易站停工"],
-    "roi": [40, 640, 800, 80],
-    "action": "Click",
-    "post_delay": 2000,
-    "next": ["Infrast@MfgStopped", "Infrast@TradeStopped", "Infrast@Collect", "Infrast@Done"]
-  },
-
   "Infrast@Collect": {
     "recognition": "OCR",
     "expected": "待办事项",
-    "roi": [40, 640, 400, 80],
+    "roi": [
+      40,
+      640,
+      400,
+      80
+    ],
     "action": "Click",
-    "target": [200, 690, 1, 1],
+    "target": [
+      200,
+      690,
+      1,
+      1
+    ],
     "post_delay": 1500,
-    "next": ["Infrast@Collect", "Infrast@Done"]
+    "next": [
+      "Infrast@Collect",
+      "Infrast@NextRound"
+    ]
   },
-
+  "Infrast@NextRound": {
+    "action": "Custom",
+    "custom_action": "InfrastNextRound",
+    "post_delay": 500,
+    "on_error": [
+      "Infrast@Done"
+    ],
+    "next": [
+      "Infrast@Enter",
+      "Infrast@Wait"
+    ]
+  },
   "Infrast@Done": {
     "action": "DoNothing"
   }
