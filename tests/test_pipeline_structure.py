@@ -23,6 +23,7 @@ KNOWN_CUSTOM_ACTIONS = {
     "InfrastResumeStations",
     "InfrastResetRound",
     "InfrastNextRound",
+    "InfrastReception",
 }
 
 

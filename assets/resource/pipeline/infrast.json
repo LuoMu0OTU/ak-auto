@@ -61,11 +61,11 @@
     "custom_action": "InfrastResumeStations",
     "post_delay": 500,
     "on_error": [
-      "Infrast@Bell"
+      "Infrast@Reception"
     ],
     "next": [
       "Infrast@ResumeStations",
-      "Infrast@Bell"
+      "Infrast@Reception"
     ]
   },
   "Infrast@OcrMfgStation": {
@@ -76,6 +76,39 @@
       90,
       780,
       560
+    ],
+    "action": "DoNothing"
+  },
+  "Infrast@Reception": {
+    "recognition": "OCR",
+    "expected": [
+      "进驻总览",
+      "建造模式"
+    ],
+    "roi": [
+      0,
+      80,
+      200,
+      150
+    ],
+    "action": "Custom",
+    "custom_action": "InfrastReception",
+    "post_delay": 800,
+    "next": [
+      "Infrast@Bell"
+    ],
+    "on_error": [
+      "Infrast@Bell"
+    ]
+  },
+  "Infrast@OcrReception": {
+    "recognition": "OCR",
+    "expected": "会客室",
+    "roi": [
+      600,
+      90,
+      681,
+      400
     ],
     "action": "DoNothing"
   },
