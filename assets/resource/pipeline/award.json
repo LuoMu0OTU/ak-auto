@@ -9,15 +9,30 @@
   "Award@Enter": {
     "action": "Click",
     "target": [700, 530, 230, 190],
-    "post_delay": 1200,
+    "post_delay": 1500,
     "next": ["Award@Receive"]
   },
 
   "Award@Receive": {
     "action": "Click",
-    "target": [950, 50, 330, 150],
+    "target": [995, 90, 270, 60],
     "pre_delay": 500,
-    "post_delay": 800
+    "post_delay": 1500,
+    "next": ["Award@WeeklyTab"]
+  },
+
+  "Award@WeeklyTab": {
+    "action": "Click",
+    "target": [700, 15, 170, 55],
+    "post_delay": 1500,
+    "next": ["Award@ReceiveWeekly"]
+  },
+
+  "Award@ReceiveWeekly": {
+    "action": "Click",
+    "target": [995, 90, 270, 60],
+    "pre_delay": 500,
+    "post_delay": 1200
   },
 
   "AwardMail": {

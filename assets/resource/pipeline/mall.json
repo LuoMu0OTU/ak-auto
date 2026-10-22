@@ -5,65 +5,111 @@
       "Mall@CreditStore"
     ]
   },
-
   "Mall@Enter": {
     "action": "Click",
-    "target": [822, 457, 86, 71],
+    "target": [
+      822,
+      457,
+      86,
+      71
+    ],
     "post_delay": 1500,
-    "next": ["Mall@CreditStore"]
+    "next": [
+      "Mall@CreditStore"
+    ]
   },
-
   "Mall@CreditStore": {
     "action": "Click",
-    "target": [1152, 95, 104, 22],
+    "target": [
+      1152,
+      95,
+      104,
+      22
+    ],
     "post_delay": 1500,
-    "next": ["Mall@CollectCredit"]
+    "next": [
+      "Mall@CollectCredit"
+    ]
   },
-
   "Mall@CollectCredit": {
     "action": "Click",
-    "target": [900, 0, 250, 100],
-    "post_delay": 1500,
-    "next": ["Mall@Buy"]
+    "target": [
+      900,
+      0,
+      250,
+      100
+    ],
+    "post_delay": 3000,
+    "next": [
+      "Mall@Buy"
+    ]
   },
-
   "Mall@OcrCredit": {
     "recognition": "OCR",
-    "roi": [1100, 0, 180, 60],
+    "roi": [
+      1100,
+      0,
+      180,
+      60
+    ],
     "action": "DoNothing"
   },
-
   "Mall@OcrItems": {
     "recognition": "OCR",
-    "roi": [0, 120, 1280, 560],
+    "roi": [
+      0,
+      120,
+      1280,
+      560
+    ],
     "action": "DoNothing"
   },
-
   "Mall@Buy": {
     "recognition": "OCR",
-    "roi": [0, 120, 1280, 560],
+    "roi": [
+      0,
+      120,
+      1280,
+      560
+    ],
     "action": "Custom",
     "custom_action": "MallSelectBuy",
-    "on_error": ["Mall@Done"],
-    "next": ["Mall@ConfirmBuy"]
+    "on_error": [
+      "Mall@Done"
+    ],
+    "next": [
+      "Mall@ConfirmBuy"
+    ],
+    "pre_delay": 1000
   },
-
   "Mall@ConfirmBuy": {
     "recognition": "OCR",
     "expected": "购买物品",
-    "roi": [700, 500, 500, 150],
+    "roi": [
+      700,
+      500,
+      500,
+      150
+    ],
     "action": "Click",
     "post_delay": 1000,
-    "next": ["Mall@Confirm2"]
+    "next": [
+      "Mall@Confirm2"
+    ]
   },
-
   "Mall@Confirm2": {
     "action": "Click",
-    "target": [940, 540, 260, 140],
+    "target": [
+      940,
+      540,
+      260,
+      140
+    ],
     "post_delay": 1200,
-    "next": ["Mall@Buy"]
+    "next": [
+      "Mall@Buy"
+    ]
   },
-
   "Mall@Done": {
     "action": "DoNothing"
   }

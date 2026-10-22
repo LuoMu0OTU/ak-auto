@@ -1,6 +1,7 @@
 {
   "StartUp": {
     "next": [
+      "StartUp@Login",
       "StartUp@DismissPopup",
       "StartUp@IsHome",
       "StartUp@Loading",
@@ -8,6 +9,13 @@
       "StartUp@CloseAnno",
       "StartUp@Offline"
     ]
+  },
+
+  "StartUp@Login": {
+    "recognition": "OCR",
+    "expected": ["查看公告", "账号登录", "游客登录"],
+    "roi": [600, 600, 681, 120],
+    "action": "StopTask"
   },
 
   "StartUp@DismissPopup": {
