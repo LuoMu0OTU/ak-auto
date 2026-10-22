@@ -70,7 +70,10 @@
   },
   "Infrast@OcrMfgStation": {
     "recognition": "OCR",
-    "expected": "制造站",
+    "expected": [
+      "制造站",
+      "贸易站"
+    ],
     "roi": [
       0,
       90,

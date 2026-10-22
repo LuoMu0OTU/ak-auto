@@ -58,8 +58,8 @@ class InfrastResumeStations(CustomAction):
         stopped: list[tuple[int, int]] = []
         for r in detail.all_results:
             text = (getattr(r, "text", "") or "").replace(" ", "")
-            # 只认「制造站」开头的站名（排除「加工站」等误读）
-            if not text.startswith("制造站"):
+            # 只认「制造站/贸易站」开头的站名（排除「加工站」等误读）
+            if not (text.startswith("制造站") or text.startswith("贸易站")):
                 continue
             box = r.box
             if is_stopped(img, (box[0], box[1], box[2], box[3])):
