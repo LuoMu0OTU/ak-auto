@@ -25,9 +25,9 @@ from ..config import AppConfig
 class WelcomePage(QWizardPage):
     def __init__(self) -> None:
         super().__init__()
-        self.setTitle("欢迎使用 ak-auto")
+        self.setTitle("欢迎使用 arknights-auto")
         text = QLabel(
-            "ak-auto 是面向《明日方舟》官方 PC 客户端的本地自动化助手。\n\n"
+            "arknights-auto 是面向《明日方舟》官方 PC 客户端的本地自动化助手。\n\n"
             "本向导将帮你：\n"
             "  1. 检查运行环境（Python / MaaFw / 识别资源）\n"
             "  2. 确认游戏客户端路径\n"
@@ -142,7 +142,7 @@ class FirstRunWizard(QWizard):
         super().__init__()
         self.cfg = cfg
         self.svc = svc
-        self.setWindowTitle("ak-auto 首次启动向导")
+        self.setWindowTitle("arknights-auto 首次启动向导")
         self.resize(640, 480)
         self.setWizardStyle(QWizard.WizardStyle.ModernStyle)
         self.addPage(WelcomePage())

@@ -21,8 +21,8 @@ def run_gui() -> int:
     cfg = svc.load()
 
     app = QApplication(sys.argv)
-    app.setApplicationName("ak-auto")
-    app.setOrganizationName("ak-auto")
+    app.setApplicationName("arknights-auto")
+    app.setOrganizationName("arknights-auto")
     apply_theme(app)
 
     # 首次运行（无配置文件）→ 先走向导

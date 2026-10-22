@@ -4,7 +4,7 @@
 
 ## 0. 项目定位
 
-- 仓库：<https://github.com/LuoMu0OTU/ak-auto>
+- 仓库：<https://github.com/LuoMu0OTU/arknights-auto>
 - 目标：把面向《明日方舟》官方 PC 客户端的本地自动化工具，演进为可安装、易用、稳定、可测试、可持续维护的 Windows 桌面产品。
 - **产品策略 C：统一核心、双模式 UI。** 简单模式让普通玩家选择预设并一键执行；高级模式开放策略、任务编排、配置和诊断。两者不得拥有分叉的任务执行逻辑。
 - 兼容现有 CLI、JSON Pipeline、Python Custom Action 和 MaaFramework 能力；渐进式改造，不得无依据推倒重写。

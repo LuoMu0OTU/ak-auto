@@ -125,7 +125,7 @@ class UpdatesConfig(BaseModel):
     """更新检查（Phase 7）：只检查+提示，不自动下载安装。"""
 
     check_enabled: bool = True   # 启动时后台检查新版本
-    repo: str = "LuoMu0OTU/ak-auto"
+    repo: str = "LuoMu0OTU/arknights-auto"
 
 
 class PresetConfig(BaseModel):

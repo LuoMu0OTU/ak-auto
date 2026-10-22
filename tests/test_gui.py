@@ -37,7 +37,7 @@ def test_main_window_constructs(qapp) -> None:
     from ak_auto.gui.main_window import NAV_ITEMS, MainWindow
 
     win = MainWindow(AppConfig())
-    assert win.windowTitle() == "ak-auto — 明日方舟本地自动化助手"
+    assert win.windowTitle() == "arknights-auto — 明日方舟本地自动化助手"
     assert win.nav.count() == len(NAV_ITEMS) + 2 == 6  # 4 常规页 + 高级设置 + 诊断
     assert win.pages.count() == 6
     assert win.nav.item(4).isHidden() and win.nav.item(5).isHidden()  # 简单模式下隐藏
@@ -153,7 +153,7 @@ def test_wizard_constructs(qapp, tmp_path) -> None:
     svc = ConfigurationService(tmp_path / "c.json")
     wiz = FirstRunWizard(svc.load(), svc)
     assert len(wiz.pageIds()) == 5
-    assert wiz.windowTitle() == "ak-auto 首次启动向导"
+    assert wiz.windowTitle() == "arknights-auto 首次启动向导"
     wiz.close()
 
 

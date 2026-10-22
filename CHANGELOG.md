@@ -99,4 +99,4 @@ Phase 7 阶段性发布：**完整日常实机 17/17 全部成功**（总耗时�
 
 - 明日方舟 PC 官服本地自动化：启动/回主界面/关弹窗、公招、基建收菜、好友访问、信用商店采购、任务/邮件/签到、刷图（单场）。
 - CLI（`doctor`/`probe`/`fetch-assets`/`run`/`daily`/`lint`）+ 三个一键 .bat 启动脚本。
-- 发布到 GitHub：LuoMu0OTU/ak-auto（公开，AGPL-3.0）。
+- 发布到 GitHub：LuoMu0OTU/arknights-auto（公开，AGPL-3.0）。

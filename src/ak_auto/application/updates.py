@@ -11,7 +11,7 @@ import urllib.request
 from dataclasses import dataclass
 from typing import Optional
 
-REPO = "LuoMu0OTU/ak-auto"
+REPO = "LuoMu0OTU/arknights-auto"
 UA = {"User-Agent": "ak-auto/update-check"}
 LATEST_URL = f"https://api.github.com/repos/{REPO}/releases/latest"
 

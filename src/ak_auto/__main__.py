@@ -14,7 +14,7 @@ import sys
 
 import typer
 
-app = typer.Typer(name="ak-auto", no_args_is_help=True, help="明日方舟本地自动化助手")
+app = typer.Typer(name="arknights-auto", no_args_is_help=True, help="明日方舟本地自动化助手")
 
 
 def _utf8() -> None:

@@ -330,7 +330,7 @@ class MainWindow(QMainWindow):
         self.cfg = cfg
         self.svc = svc or ConfigurationService()
         self.worker: TaskWorker | None = None
-        self.setWindowTitle("ak-auto — 明日方舟本地自动化助手")
+        self.setWindowTitle("arknights-auto — 明日方舟本地自动化助手")
         self.resize(1024, 680)
 
         # 左侧导航：常规页面 + 高级页面（仅高级模式显示）+ 底部模式切换
