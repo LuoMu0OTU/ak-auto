@@ -69,24 +69,12 @@ def decide_loops(sanity, cost, cfg: AppConfig) -> tuple:
 
 
 class FightRecoverCapture(CustomAction):
-    """恢复截图：战斗的独占渲染会把桌面复制（DXGI）打进 ACCESS_LOST 状态，
-    还原窗口 + 主动截一张图可以自愈（真机实测）。"""
+    """恢复截图（Fight 流程内部节点，战斗中/后调用）；逻辑复用 device.recover_capture。"""
 
     def run(self, context, argv) -> bool:
         ctrl = context.tasker.controller
-        hwnd = (ctrl.info or {}).get("hwnd")
-        for attempt in range(4):
-            try:
-                img = ctrl.post_screencap().wait().get()
-                if img is not None and getattr(img, "size", 0):
-                    print(f"[fight] 截图已恢复（第 {attempt + 1} 次）", flush=True)
-                    return True
-            except Exception:  # noqa: BLE001
-                pass
-            if hwnd:
-                device.restore_window(hwnd)
-            time.sleep(2.0)
-        print("[fight] 截图恢复失败", flush=True)
+        ok = device.recover_capture(ctrl)
+        print(f"[fight] 截图恢复{'成功' if ok else '失败'}", flush=True)
         return True  # 恢复失败也继续（点击类动作不依赖截图）
 
 

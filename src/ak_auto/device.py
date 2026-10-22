@@ -365,6 +365,28 @@ def capture(ctrl: Win32Controller) -> np.ndarray:
     return img
 
 
+def recover_capture(ctrl: Win32Controller, attempts: int = 4) -> bool:
+    """恢复截图链路（通用「截图自愈前置」，Phase 7）。
+
+    游戏战斗的独占渲染会把桌面复制（DXGI）打进 ACCESS_LOST / 窗口失效（-32000）状态；
+    还原窗口 + 主动截一张图即可自愈。每个任务执行前调用，避免战斗后连锁失败。
+    """
+    import time
+
+    hwnd = (ctrl.info or {}).get("hwnd")
+    for attempt in range(attempts):
+        try:
+            img = ctrl.post_screencap().wait().get()
+            if img is not None and getattr(img, "size", 0):
+                return True
+        except Exception:  # noqa: BLE001
+            pass
+        if hwnd:
+            restore_window(hwnd)
+        time.sleep(2.0)
+    return False
+
+
 def save_image(img: np.ndarray, path: str | Path) -> Path:
     """保存截图（3 通道 BGR → RGB）。"""
     arr = img

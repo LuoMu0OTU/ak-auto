@@ -44,3 +44,19 @@ def test_retry_zero_is_single_attempt() -> None:
     t = FakeTasker(ok=False)
     results = run_sequence(t, ["Fake"], retry_per_task=0)
     assert len(t.posted) == 1 and not results[0].ok
+
+
+def test_recover_capture_runs_before_each_task(monkeypatch) -> None:
+    """截图自愈前置：run_sequence 每个任务前调用 device.recover_capture。"""
+    calls: list = []
+
+    class _Ctrl:
+        info = {"hwnd": 1}
+
+    class T(FakeTasker):
+        controller = _Ctrl()
+
+    monkeypatch.setattr("ak_auto.device.recover_capture", lambda ctrl: calls.append(ctrl) or True)
+    t = T()
+    run_sequence(t, ["Fake", "Fake"], retry_per_task=0)
+    assert len(calls) == 2  # 每个任务前各一次

@@ -152,6 +152,16 @@ def _cancelled_result(entry: str) -> ExecutionResult:
     )
 
 
+def _recover_capture(tasker: Tasker) -> None:
+    """截图自愈前置：每个任务执行前还原窗口 + 恢复截图（失败静默继续）。"""
+    try:
+        from . import device
+
+        device.recover_capture(tasker.controller)
+    except Exception:  # noqa: BLE001 —— 恢复失败不阻断任务
+        pass
+
+
 def run_sequence(
     tasker: Tasker,
     entries: list[str],
@@ -188,6 +198,7 @@ def run_sequence(
 
         result: Optional[ExecutionResult] = None
         cancelled = False
+        _recover_capture(tasker)  # 截图自愈前置：战斗可能把截图链路打挂
         for attempt in range(1 + retry_per_task):
             if cancel_event is not None and cancel_event.is_set():
                 cancelled = True
