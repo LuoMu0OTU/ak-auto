@@ -11,6 +11,9 @@ Agent 可恢复工作状态
 当前阶段：Phase 7 持续维护（Fight 端到端已跑通；backlog 见 ROADMAP）
 
 本轮重大成果：
+- **仓库更名**：LuoMu0OTU/ak-auto → **LuoMu0OTU/arknights-auto**（GitHub 旧链接自动重定向）；同步更新 update checker / 配置默认值 / README / GUI 标题 / CLI 名 / 向导文案 / AGENTS 仓库地址。
+- **v0.2.0 已正式发布**：https://github.com/LuoMu0OTU/arknights-auto/releases/tag/v0.2.0（资产 AkAuto-windows.zip 110.3 MB；CI 测试+构建均通过）。
+
 - **完整日常 17/17 全绿（2026-10-22，总耗时 18.9 分钟）**：StartUp/好友访问/基建收菜(含会客室线索两轮+发光站恢复)/信用商店/公招/自动刷图(端到端)/任务/邮件/签到 全部 OK。
 - 基建会客室线索收取完整流程（真机标定）：搜集中 → 快捷置入+线索交流 → 接收线索→全部收取 → 传递线索→一键递送→× → 线索 → 信用奖励→领取→× → 回基地。
 - 发光站一键恢复扩展到贸易站（橙/黄状态字判定）。
