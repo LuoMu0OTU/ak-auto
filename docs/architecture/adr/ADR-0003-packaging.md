@@ -37,7 +37,7 @@ ak-auto 需产出不依赖用户预装 Python 的 Windows 便携包，包含：
 
 ## 打包形态
 
-- `dist/AkAuto/ak-auto.exe`（onedir）：exe + `_internal/`（运行时与只读资源）。
+- `dist/ArknightsAuto/arknights-auto.exe`（onedir）：exe + `_internal/`（运行时与只读资源）。
 - 首启 bootstrap：把 `_internal` 内的 `assets/resource/pipeline/`、`assets/maa-vendor/`、`config/config.example.json` 复制到 exe 旁数据目录（不存在时），之后所有读写都在数据目录进行（与开发模式同构）。
 - 识别资源（模板图/OCR 模型）：首启 fetch-assets 进程内下载（工具模块 stdlib-only，可导入复用）。
 - 升级策略：新版本替换 exe + `_internal`，数据目录保留（配置/日志/资源不回滚）。

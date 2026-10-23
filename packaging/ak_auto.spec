@@ -1,7 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 """PyInstaller spec：ak-auto 便携包（ADR-0003）。
 
-- onedir 模式：dist/AkAuto/ak-auto.exe + _internal/（运行时与只读资源）
+- onedir 模式：dist/ArknightsAuto/arknights-auto.exe + _internal/（运行时与只读资源）
 - 大体积识别资源（模板图/OCR 模型）不打包，首启 fetch-assets 下载
 - 配置与程序分离：可写数据在 exe 旁目录（src/ak_auto/paths.py）
 """
@@ -52,7 +52,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name="ak-auto",
+    name="arknights-auto",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -71,5 +71,5 @@ coll = COLLECT(
     strip=False,
     upx=False,
     upx_exclude=[],
-    name="AkAuto",
+    name="ArknightsAuto",
 )

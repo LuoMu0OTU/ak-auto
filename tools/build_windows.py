@@ -2,13 +2,13 @@
 """构建 Windows 便携包（PyInstaller onedir，ADR-0003）。
 
 用法：
-    python tools/build_windows.py            # 构建 dist/AkAuto/
+    python tools/build_windows.py            # 构建 dist/ArknightsAuto/
     python tools/build_windows.py --smoke    # 构建 + 启动打包版 GUI 冒烟
     python tools/build_windows.py --no-clean # 增量构建
 
 产物：
-    dist/AkAuto/ak-auto.exe       窗口化入口（双击启动 GUI）
-    dist/AkAuto/_internal/        运行时 + 只读资源（流水线/数据表/配置模板）
+    dist/ArknightsAuto/arknights-auto.exe  窗口化入口（双击启动 GUI）
+    dist/ArknightsAuto/_internal/        运行时 + 只读资源（流水线/数据表/配置模板）
 """
 from __future__ import annotations
 
@@ -29,8 +29,8 @@ def _utf8() -> None:
 
 ROOT = Path(__file__).resolve().parent.parent
 SPEC = ROOT / "packaging" / "ak_auto.spec"
-DIST = ROOT / "dist" / "AkAuto"
-EXE = DIST / "ak-auto.exe"
+DIST = ROOT / "dist" / "ArknightsAuto"
+EXE = DIST / "arknights-auto.exe"
 
 
 def main() -> int:
@@ -50,7 +50,7 @@ def main() -> int:
         return p.returncode
 
     if not EXE.is_file():
-        print("[build] 产物缺失：dist/AkAuto/ak-auto.exe")
+        print("[build] 产物缺失：dist/ArknightsAuto/arknights-auto.exe")
         return 1
     size = sum(f.stat().st_size for f in DIST.rglob("*") if f.is_file()) / (1024 * 1024)
     print(f"[build] 完成：{EXE}（约 {size:.0f} MB）")

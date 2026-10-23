@@ -35,7 +35,7 @@ HEAD：84ae3f5
 - ADR-0003：打包选型 PyInstaller（onedir 便携）——理由见 docs/architecture/adr/ADR-0003-packaging.md。
 - frozen 路径层（src/ak_auto/paths.py）：数据目录=exe 旁（可写）、bundle=_internal（只读）；首启 bootstrap 复制流水线/数据表/配置模板。
 - fetch/lint 进程内化（src/ak_auto/assets_fetch.py + tools 薄包装）：打包版无 Python 解释器也可用；AssetManager.ensure 改进程内调用。
-- PyInstaller 打包（packaging/ak_auto.spec + launcher.py + tools/build_windows.py）：dist/AkAuto/ak-auto.exe（约 344 MB）。
+- PyInstaller 打包（packaging/ak_auto.spec + launcher.py + tools/build_windows.py）：dist/ArknightsAuto/arknights-auto.exe（约 344 MB）。
   - 控制台版构建 + GUI 启动时隐藏控制台（窗口版引导器在本机于 Python 之前静默崩溃，已规避并记录）。
   - 显式收集 maa/ak_auto 惰性导入子模块 + maa/bin 动态库（MaaFramework/onnxruntime/opencv 等）。
 - 真机冒烟（打包版）：doctor 全绿（Python/MaaFw/资源/游戏路径/窗口）、GUI 首次启动向导弹出、`run ReturnToHome` 全栈跑通（控制器+OCR+点击+流水线）。

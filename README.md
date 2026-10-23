@@ -54,10 +54,10 @@
 
 Phase 6 起提供 Windows 便携包（PyInstaller onedir，约 344 MB），**无需预装 Python**：
 
-1. 下载并解压 `dist/AkAuto/`（CI 构建产物或发布包）。
-2. 双击 `ak-auto.exe` → 首次启动向导 → 环境检查 → 自动下载识别资源（需联网）。
+1. 下载并解压 `ArknightsAuto-windows.zip`（GitHub Release 发布包）。
+2. 双击 `arknights-auto.exe` → 首次启动向导 → 环境检查 → 自动下载识别资源（需联网）。
 3. 连接游戏（游戏客户端需管理员权限，会弹一次 UAC）→ 勾选任务 → 开始。
-4. 配置/日志/识别资源都在 exe 旁目录；升级只替换 `ak-auto.exe` + `_internal/`。
+4. 配置/日志/识别资源都在 exe 旁目录；升级只替换 `arknights-auto.exe` + `_internal/`。
 
 > 详细构建与干净机验收清单见 [docs/BUILD.md](docs/BUILD.md)。
 
